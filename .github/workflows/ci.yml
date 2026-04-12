@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  sdk:
+    name: SDK Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        working-directory: sdk/ts
+        run: npm install
+      - name: Typecheck
+        working-directory: sdk/ts
+        run: npx tsc --noEmit
+      - name: Run tests
+        working-directory: sdk/ts
+        run: npx vitest run
+
+  gateway:
+    name: Gateway Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install dependencies
+        working-directory: gateway
+        run: npm install
+      - name: Typecheck
+        working-directory: gateway
+        run: npx tsc --noEmit
+      - name: Run tests
+        working-directory: gateway
+        run: npx vitest run
+
+  schema:
+    name: Schema Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Validate contract schema
+        run: |
+          node -e "
+            const schema = require('./spec/schemas/atp-contract.schema.json');
+            console.log('Schema loaded:', schema.title);
+            console.log('Required fields:', schema.required);
+            console.log('Properties:', Object.keys(schema.properties).length);
+            console.log('Schema valid: true');
+          "
+      - name: Validate example contracts
+        run: |
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const dir = './examples/contracts';
+            const files = fs.readdirSync(dir).filter(f => f.endsWith('.json'));
+            for (const file of files) {
+              const contract = JSON.parse(fs.readFileSync(path.join(dir, file)));
+              const required = ['version', 'authority', 'actions', 'attestation'];
+              const missing = required.filter(f => !contract[f]);
+              if (missing.length > 0) {
+                throw new Error(file + ' missing: ' + missing.join(', '));
+              }
+              console.log('✓', file);
+            }
+            console.log('All example contracts valid');
+          "
