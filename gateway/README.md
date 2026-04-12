@@ -1,8 +1,14 @@
 # @atp-protocol/gateway
 
-Reference ATP gateway — governed execution middleware for MCP tools.
+Reference ATP gateway — governed execution middleware for MCP tools on [DUAL](https://dual.network).
 
 This is the reference implementation of the ATP gateway as specified in the [ATP Protocol Specification](../spec/ATP-SPEC-v1.md).
+
+## Install
+
+```bash
+npm install @atp-protocol/gateway
+```
 
 ## What it does
 
@@ -83,6 +89,34 @@ This reference gateway implements **ATP-Verified** conformance:
 - Idempotency enforcement (gateway-enforced)
 - Evidence capture for all executions including denials
 - Revocation with immediate propagation
+
+## Deep imports
+
+Individual middleware and stores are available for custom gateway implementations:
+
+```typescript
+import { checkAuthority } from "@atp-protocol/gateway/middleware";
+import { evaluatePolicy } from "@atp-protocol/gateway/middleware";
+import { ContractStore, AuthorityStore } from "@atp-protocol/gateway/store";
+```
+
+## Types
+
+```typescript
+import type {
+  ExecutionRequest,
+  ExecutionResponse,
+  ExecutionOutcome,
+  EvidenceRecord,
+  GatewayConfig,
+  WalletBinding,
+  StoredCredential,
+} from "@atp-protocol/gateway";
+```
+
+## Protocol spec
+
+This gateway implements the [ATP Protocol Specification v1.0.0-draft.2](https://github.com/ATP-Protocol/atp-protocol/blob/main/spec/ATP-SPEC-v1.md), Sections 5-11.
 
 ## License
 

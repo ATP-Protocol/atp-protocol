@@ -1,8 +1,10 @@
 # @atp-protocol/sdk
 
-TypeScript SDK for the [Agent Trust Protocol (ATP)](https://github.com/ATP-Protocol/atp-protocol).
+TypeScript SDK for the [Agent Trust Protocol (ATP)](https://github.com/ATP-Protocol/atp-protocol) — governed execution for AI agents on [DUAL](https://dual.network).
 
 Govern AI agent execution with authority checks, policy evaluation, approval flows, credential brokerage, and evidence capture.
+
+One import. One wrapper. The agent keeps calling the tool exactly as before — but now authority is checked, policy is enforced, approvals are gated, credentials are brokered, and evidence is recorded.
 
 ## Install
 
@@ -151,9 +153,41 @@ const contract = await loadContract("contracts/procurement-email.json");
 | `canTransition(state, trigger)` | Check if a transition is valid |
 | `validTriggers(state)` | Get all valid triggers for a state |
 
+## Deep imports
+
+Each module is available as a direct import for tree-shaking:
+
+```typescript
+import { validateContract } from "@atp-protocol/sdk/contract";
+import { evaluatePolicy } from "@atp-protocol/sdk/policy";
+import { ApprovalFlow } from "@atp-protocol/sdk/approval";
+import { atpGovern } from "@atp-protocol/sdk/governance";
+```
+
+## Types
+
+All ATP types are exported for TypeScript consumers:
+
+```typescript
+import type {
+  ATPContract,
+  ExecutionOutcome,
+  ApprovalState,
+  EvidenceRecord,
+  PolicyEvaluation,
+  GovernOptions,
+  GovernedResult,
+  ConformanceLevel,
+} from "@atp-protocol/sdk";
+```
+
 ## Conformance
 
-This SDK enables **ATP-Aware** and **ATP-Compatible** conformance levels out of the box. For **ATP-Verified** and **ATP-Attested**, connect to an ATP gateway.
+This SDK enables **ATP-Aware** and **ATP-Compatible** conformance levels out of the box. For **ATP-Verified** and **ATP-Attested**, connect to an [ATP gateway](https://github.com/ATP-Protocol/atp-protocol/tree/main/gateway).
+
+## Protocol spec
+
+This SDK implements the [ATP Protocol Specification v1.0.0-draft.2](https://github.com/ATP-Protocol/atp-protocol/blob/main/spec/ATP-SPEC-v1.md).
 
 ## License
 

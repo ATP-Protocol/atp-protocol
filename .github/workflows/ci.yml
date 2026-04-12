@@ -24,6 +24,9 @@ jobs:
       - name: Typecheck
         working-directory: sdk/ts
         run: npx tsc --noEmit
+      - name: Build (CJS + ESM)
+        working-directory: sdk/ts
+        run: npm run build
       - name: Run tests
         working-directory: sdk/ts
         run: npx vitest run
@@ -45,6 +48,9 @@ jobs:
       - name: Typecheck
         working-directory: gateway
         run: npx tsc --noEmit
+      - name: Build (CJS + ESM)
+        working-directory: gateway
+        run: npm run build
       - name: Run tests
         working-directory: gateway
         run: npx vitest run

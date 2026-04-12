@@ -2,28 +2,74 @@
   "name": "@atp-protocol/gateway",
   "version": "0.1.0",
   "description": "Reference ATP gateway — governed execution middleware for MCP tools",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/cjs/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./middleware": {
+      "types": "./dist/cjs/middleware/index.d.ts",
+      "import": "./dist/esm/middleware/index.js",
+      "require": "./dist/cjs/middleware/index.js"
+    },
+    "./store": {
+      "types": "./dist/cjs/store/index.d.ts",
+      "import": "./dist/esm/store/index.js",
+      "require": "./dist/cjs/store/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
-    "build": "tsc",
-    "start": "node dist/index.js",
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm test",
+    "start": "node dist/cjs/index.js",
     "dev": "tsx src/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit"
   },
-  "keywords": ["atp", "gateway", "mcp", "governance", "ai-agents"],
+  "keywords": [
+    "atp",
+    "agent-trust-protocol",
+    "gateway",
+    "mcp",
+    "governance",
+    "ai-agents",
+    "model-context-protocol",
+    "dual"
+  ],
   "author": "DUAL Network",
   "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ATP-Protocol/atp-protocol.git",
+    "directory": "gateway"
+  },
+  "homepage": "https://github.com/ATP-Protocol/atp-protocol/tree/main/gateway",
+  "bugs": {
+    "url": "https://github.com/ATP-Protocol/atp-protocol/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
-    "express": "^4.19.0",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
     "vitest": "^1.6.0",
     "@types/node": "^20.0.0",
-    "@types/express": "^4.17.0",
     "@types/uuid": "^9.0.0",
     "tsx": "^4.7.0"
   }
