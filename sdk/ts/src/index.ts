@@ -75,6 +75,52 @@ export type { PolicyRule, ConstraintRuleType } from "./policy";
 export { ApprovalFlow, ApprovalError, canTransition, validTriggers } from "./approval";
 export type { ApprovalTransition, ApprovalTrigger } from "./approval";
 
+// Evidence recording and backends
+export {
+  EvidenceBuilder,
+  buildEvidence,
+  verifyEvidence,
+  hashEvidence,
+  MemoryEvidenceBackend,
+  FileEvidenceBackend,
+  DUALEvidenceBackend,
+  MultiBackend,
+} from "./evidence";
+export type {
+  EvidenceBackend,
+  EvidenceQuery,
+  EvidenceQueryResult,
+  EvidenceBuildInput,
+  EvidenceVerification,
+} from "./evidence";
+
+// Credential brokerage
+export {
+  CredentialStore,
+  resolveCredential,
+  buildInjectionHeaders,
+} from "./credentials";
+export type {
+  CredentialProvider,
+  CredentialResolution,
+  StoredCredentialEntry,
+} from "./credentials";
+
+// Execution management
+export {
+  execute,
+  classifyOutcome,
+  generateIdempotencyKey,
+  generateExecutionId,
+  isRetryable,
+} from "./execution";
+export type {
+  ExecutionContext,
+  ExecutionHooks,
+  ExecutionOptions,
+  ManagedExecutionResult,
+} from "./execution";
+
 // Types
 export type {
   // Contract

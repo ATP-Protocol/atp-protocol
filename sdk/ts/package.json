@@ -30,6 +30,21 @@
       "types": "./dist/cjs/governance/index.d.ts",
       "import": "./dist/esm/governance/index.js",
       "require": "./dist/cjs/governance/index.js"
+    },
+    "./evidence": {
+      "types": "./dist/cjs/evidence/index.d.ts",
+      "import": "./dist/esm/evidence/index.js",
+      "require": "./dist/cjs/evidence/index.js"
+    },
+    "./credentials": {
+      "types": "./dist/cjs/credentials/index.d.ts",
+      "import": "./dist/esm/credentials/index.js",
+      "require": "./dist/cjs/credentials/index.js"
+    },
+    "./execution": {
+      "types": "./dist/cjs/execution/index.d.ts",
+      "import": "./dist/esm/execution/index.js",
+      "require": "./dist/cjs/execution/index.js"
     }
   },
   "files": [

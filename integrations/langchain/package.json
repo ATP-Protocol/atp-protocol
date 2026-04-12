@@ -1,0 +1,57 @@
+{
+  "name": "@atp-protocol/langchain",
+  "version": "0.1.0",
+  "description": "ATP governance adapter for LangChain — wrap any LangChain tool with agent trust governance",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/cjs/index.d.ts",
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "npm run build:cjs && npm run build:esm",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm test",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "atp",
+    "langchain",
+    "ai-agents",
+    "governance",
+    "trust",
+    "tool-calling"
+  ],
+  "author": "DUAL Network",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ATP-Protocol/atp-protocol.git",
+    "directory": "integrations/langchain"
+  },
+  "peerDependencies": {
+    "@langchain/core": ">=0.2.0"
+  },
+  "dependencies": {
+    "@atp-protocol/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "@langchain/core": "^0.3.0",
+    "@atp-protocol/sdk": "^0.1.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0",
+    "@types/node": "^20.0.0"
+  }
+}
