@@ -16,13 +16,15 @@ ATP is a reference implementation and specification. Security issues affect both
 If you discover a security vulnerability:
 
 1. **Do not open a public GitHub issue.** Public disclosure before a fix is available puts all ATP implementations at risk.
-2. **Email security@atp-protocol.org** with:
+2. **Report via GitHub Private Vulnerability Reporting:**  
+   Navigate to the [Security tab](https://github.com/ATP-Protocol/atp-protocol/security/advisories/new) of this repository and select **"Report a vulnerability"**. This is the preferred channel — it keeps the report confidential, creates a private fork for fixes, and gives you credit when the advisory is published.
+3. **Alternatively, email icbmatrix@gmail.com** with:
    - The vulnerability title and description
    - Affected component(s) (spec, gateway, SDK, DUAL integration)
    - A proof-of-concept if possible
    - Your recommended timeline for disclosure
-3. **We will acknowledge your report within 48 hours** and provide a target remediation date.
-4. **We commit to 90-day disclosure windows** at minimum. If a fix is not ready, we will publicly disclose the issue ourselves with workarounds.
+4. **We will acknowledge your report within 48 hours** and provide a target remediation date.
+5. **We commit to 90-day disclosure windows** at minimum. If a fix is not ready, we will publicly disclose the issue ourselves with workarounds.
 
 ### Scope
 
@@ -40,9 +42,9 @@ We do not consider security vulnerabilities:
 - Decisions to run ATP at a lower conformance level
 - Vulnerabilities in downstream tools (outside ATP's scope)
 
-### PGP Key
+### Encrypted Disclosure
 
-Encrypted disclosure: `[GPG key placeholder — publish via documentation site]`
+For sensitive reports requiring encryption, contact icbmatrix@gmail.com to arrange a secure channel. We will provide a PGP key on request.
 
 ---
 
