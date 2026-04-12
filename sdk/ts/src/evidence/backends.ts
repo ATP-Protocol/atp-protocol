@@ -335,7 +335,8 @@ export class DUALEvidenceBackend implements EvidenceBackend {
     });
     if (!res.ok) {
       const body = await res.text();
-      throw new Error(`DUAL ${res.status}: ${body}`);
+      const redactedBody = redactSecrets(body, [this.config.apiKey]);
+      throw new Error(`DUAL ${res.status}: ${redactedBody}`);
     }
     return res.json() as Promise<T>;
   }
@@ -655,4 +656,21 @@ function canonicalJson(obj: unknown): string {
       `${JSON.stringify(key)}:${canonicalJson((obj as Record<string, unknown>)[key])}`
   );
   return `{${pairs.join(",")}}`;
+}
+
+/**
+ * Redact known secrets from error messages.
+ * Replaces credential values with [REDACTED].
+ */
+function redactSecrets(text: string, secrets: (string | undefined)[]): string {
+  let result = text;
+  for (const secret of secrets) {
+    if (secret && secret.length > 0) {
+      // Escape regex special chars in the secret
+      const escaped = secret.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "g");
+      result = result.replace(regex, "[REDACTED]");
+    }
+  }
+  return result;
 }

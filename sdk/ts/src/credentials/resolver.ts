@@ -232,7 +232,20 @@ export class CredentialStore {
   ): Promise<StoredCredentialEntry | null> {
     for (const provider of this.providers) {
       if (provider.refresh) {
-        const refreshed = await provider.refresh(entry);
+        // Only pass metadata to the provider, NOT the credential value
+        const metadata = {
+          provider: entry.provider,
+          scopes: entry.scopes,
+          type: entry.type,
+          org_id: entry.org_id,
+          expires_at: entry.expires_at,
+        };
+        // Reconstruct a credential entry with only metadata for the refresh call
+        const metadataEntry: StoredCredentialEntry = {
+          ...metadata,
+          value: "", // Empty value — provider should not see the old secret
+        };
+        const refreshed = await provider.refresh(metadataEntry);
         if (refreshed) {
           this.register(refreshed);
           return refreshed;

@@ -41,6 +41,10 @@
     "url": "https://github.com/ATP-Protocol/atp-protocol.git",
     "directory": "integrations/langchain"
   },
+  "homepage": "https://github.com/ATP-Protocol/atp-protocol/tree/main/integrations/langchain",
+  "bugs": {
+    "url": "https://github.com/ATP-Protocol/atp-protocol/issues"
+  },
   "peerDependencies": {
     "@langchain/core": ">=0.2.0"
   },

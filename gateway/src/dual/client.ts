@@ -53,6 +53,7 @@ export class RealDUALClient implements IDUALClient {
   private network: "mainnet" | "testnet";
 
   constructor(endpoint: string, network: "mainnet" | "testnet" = "testnet", apiKey?: string) {
+    validateEndpoint(endpoint);
     this.endpoint = endpoint.replace(/\/$/, ""); // Remove trailing slash
     this.network = network;
     this.apiKey = apiKey;
@@ -76,8 +77,9 @@ export class RealDUALClient implements IDUALClient {
 
     if (!response.ok) {
       const errorText = await response.text();
+      const redactedError = redactSecrets(errorText, [this.apiKey]);
       throw new Error(
-        `DUAL API error (${response.status}): ${errorText}`
+        `DUAL API error (${response.status}): ${redactedError}`
       );
     }
 
@@ -329,4 +331,65 @@ export class MockDUALClient implements IDUALClient {
       result: { executed: true },
     };
   }
+}
+
+/**
+ * Validate endpoint URL for SSRF safety.
+ * Requires HTTPS except for localhost development.
+ * Blocks private/reserved IP ranges.
+ */
+function validateEndpoint(url: string): void {
+  try {
+    const parsed = new URL(url);
+
+    // Require HTTPS, except for localhost/127.0.0.1 (development)
+    if (parsed.protocol !== "https:") {
+      if (
+        parsed.protocol === "http:" &&
+        (parsed.hostname === "localhost" || parsed.hostname === "127.0.0.1")
+      ) {
+        // Allow HTTP for localhost dev only
+        return;
+      }
+      throw new Error("Endpoint must use HTTPS protocol");
+    }
+
+    // Block private/reserved IP ranges
+    const hostname = parsed.hostname;
+    const privateRanges = [
+      /^10\./,                           // 10.0.0.0/8
+      /^172\.(1[6-9]|2[0-9]|3[01])\./,  // 172.16.0.0/12
+      /^192\.168\./,                     // 192.168.0.0/16
+      /^169\.254\./,                     // 169.254.0.0/16 (link-local)
+      /^0\.0\.0\.0$/,                    // 0.0.0.0
+      /^localhost$/,
+      /^127\./,
+    ];
+
+    if (privateRanges.some((range) => range.test(hostname))) {
+      throw new Error(`Endpoint hostname is in private/reserved range: ${hostname}`);
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("Invalid URL")) {
+      throw new Error(`Invalid endpoint URL: ${url}`);
+    }
+    throw err;
+  }
+}
+
+/**
+ * Redact known secrets from error messages.
+ * Replaces credential values with [REDACTED].
+ */
+function redactSecrets(text: string, secrets: (string | undefined)[]): string {
+  let result = text;
+  for (const secret of secrets) {
+    if (secret && secret.length > 0) {
+      // Escape regex special chars in the secret
+      const escaped = secret.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(escaped, "g");
+      result = result.replace(regex, "[REDACTED]");
+    }
+  }
+  return result;
 }
