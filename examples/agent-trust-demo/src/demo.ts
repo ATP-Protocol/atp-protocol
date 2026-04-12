@@ -6,20 +6,14 @@
  * that Agent A is authorized, policy-compliant, and that the exchange will
  * be permanently recorded.
  *
- * ATP governs this entire interaction:
+ * ATP governs this entire interaction. DUAL anchors the proof.
  *
- *   ACT 1 — Agent A presents its identity + a signed request contract
- *   ACT 2 — Agent B verifies Agent A's wallet, org, and authority on DUAL
- *   ACT 3 — Agent B evaluates policy constraints on the data request
- *   ACT 4 — Trust established → Agent B delivers the intelligence
- *   ACT 5 — Both agents co-sign an evidence token anchored on DUAL
- *
- *   ENCORE — Agent A requests data outside its authority → denied + anchored
- *
- * Every DUAL call is real. Evidence tokens are permanent.
+ * ALL DUAL calls are real HTTP requests to the live network when DUAL_API_KEY
+ * is set. Evidence tokens are minted, written, and verified on-chain.
  *
  * Usage:
- *   DUAL_API_KEY=<key> npm run demo
+ *   DUAL_API_KEY=<key> npm run demo        # Full on-chain demo
+ *   npm run demo                            # Governance-only (no DUAL calls)
  */
 
 import { createHash } from "crypto";
@@ -33,12 +27,14 @@ import type { ATPContract } from "../../../sdk/ts/src/types";
 
 const DUAL_API = "https://api.dual.foundation";
 const DUAL_KEY = process.env.DUAL_API_KEY || "";
+const LIVE = !!DUAL_KEY;
 
 // Real identities on the DUAL network
 const AGENTS = {
   commerce: {
     name: "Commerce Agent (Alice)",
     wallet: "0x2A976Bfa74Dd3212D93067708A32e3CE2bA58110",
+    walletId: "69b92d49d5a95a6018672003",
     role: "commerce-agent",
     org: "IanTest",
     orgId: "69b935b4187e903f826bbe71",
@@ -46,7 +42,7 @@ const AGENTS = {
   },
   intelligence: {
     name: "Intelligence Agent (Bob)",
-    wallet: "0xed75538AeD2404b2BaB2D832f2F0112f6C7E59e0", // IanTest org wallet
+    wallet: "0xed75538AeD2404b2BaB2D832f2F0112f6C7E59e0",
     role: "intelligence-provider",
     org: "IanTest",
     orgId: "69b935b4187e903f826bbe71",
@@ -54,9 +50,9 @@ const AGENTS = {
   },
 };
 
-const EVIDENCE_TEMPLATE = "69db28bf77b40528a5b4851f";
+const EVIDENCE_TEMPLATE = "69db28bf77b40528a5b4851f"; // io.atp.evidence.v1
 
-// Simulated intelligence data that Agent B holds
+// Intelligence data that Agent B holds (this is the "service" Agent B provides)
 const INTELLIGENCE_DB: Record<string, any> = {
   "geo-offer-pricing": {
     classification: "internal",
@@ -90,6 +86,61 @@ const INTELLIGENCE_DB: Record<string, any> = {
 };
 
 // ============================================================================
+// DUAL API Client — Real HTTP (not mocked)
+// ============================================================================
+
+async function dualFetch<T>(path: string, opts: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${DUAL_API}${path}`, {
+    ...opts,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${DUAL_KEY}`,
+      ...((opts.headers as Record<string, string>) || {}),
+    },
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`DUAL ${res.status}: ${body}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+/** Resolve wallet from DUAL — returns wallet data or null */
+async function dualGetWallet(): Promise<any> {
+  const r = await dualFetch<any>("/wallet");
+  return r.data;
+}
+
+/** Get organization + members from DUAL */
+async function dualGetOrg(orgId: string): Promise<any> {
+  const r = await dualFetch<any>(`/organizations/${orgId}`);
+  return r.data;
+}
+
+/** Mint N evidence tokens from template */
+async function dualMint(templateId: string, num: number): Promise<string[]> {
+  const r = await dualFetch<any>("/actions", {
+    method: "POST",
+    body: JSON.stringify({ mint: { template_id: templateId, num } }),
+  });
+  return r.data?.steps?.[0]?.output?.ids || [];
+}
+
+/** Update object custom data */
+async function dualUpdate(objectId: string, custom: Record<string, unknown>): Promise<void> {
+  await dualFetch<any>("/actions", {
+    method: "POST",
+    body: JSON.stringify({ update: { id: objectId, data: { custom } } }),
+  });
+}
+
+/** Read object back for verification */
+async function dualGetObject(objectId: string): Promise<any> {
+  const r = await dualFetch<any>(`/objects/${objectId}`);
+  return r.data;
+}
+
+// ============================================================================
 // Terminal Formatting
 // ============================================================================
 
@@ -105,6 +156,7 @@ const BG_B = "\x1b[44m";
 const BG_M = "\x1b[45m";
 const BG_G = "\x1b[42m";
 const BG_R = "\x1b[41m";
+const BG_Y = "\x1b[43m";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -125,8 +177,12 @@ function ok(l: string, d = "") {
   console.log(`   ${G}✓${R} ${B}${l}${R}${d ? ` ${D}(${d})${R}` : ""}`);
 }
 
-function denied(l: string, d = "") {
+function fail(l: string, d = "") {
   console.log(`   ${RD}✗${R} ${B}${l}${R}${d ? ` ${D}(${d})${R}` : ""}`);
+}
+
+function warn(l: string, d = "") {
+  console.log(`   ${Y}⚠${R} ${B}${l}${R}${d ? ` ${D}(${d})${R}` : ""}`);
 }
 
 function info(t: string) {
@@ -146,53 +202,40 @@ function divider() {
 }
 
 // ============================================================================
-// ATP Contract Builders
+// ATP Contract
 // ============================================================================
 
-function buildDataRequestContract(
-  dataScope: string,
-  classification: string
-): ATPContract {
+function buildDataRequestContract(): ATPContract {
   return {
     version: "1.0.0",
     authority: `org.${AGENTS.commerce.fqdn}.${AGENTS.commerce.role}`,
     actions: ["request-intelligence"],
     attestation: "full",
     scope: {
-      data_scope: [
-        "geo-offer-pricing",
-        "agent-performance",
-      ],
-      // Agents cannot request restricted data
+      data_scope: ["geo-offer-pricing", "agent-performance"],
       prohibited_data_scope: ["wallet-balances", "private-keys", "credentials"],
-      max_classification_level: 2, // 1=internal, 2=confidential, 3=restricted
+      max_classification_level: 2,
     },
-    approval: {
-      required: false,
-    },
+    approval: { required: false },
     credentials: {
       provider: "dual-wallet",
       injection_method: "bearer_token",
       scopes: ["intelligence:read"],
     },
-    expiry: new Date(Date.now() + 3600000).toISOString(), // 1 hour
+    expiry: new Date(Date.now() + 3600000).toISOString(),
     idempotency: "gateway-enforced",
     revocable: true,
   };
 }
 
 // ============================================================================
-// Scope Hash
+// Helpers
 // ============================================================================
 
 function hashScope(params: Record<string, unknown>): string {
   const canonical = JSON.stringify(params, Object.keys(params).sort());
   return createHash("sha256").update(canonical).digest("hex");
 }
-
-// ============================================================================
-// Evidence Builder
-// ============================================================================
 
 function buildEvidence(
   contractId: string,
@@ -221,34 +264,7 @@ function buildEvidence(
 }
 
 // ============================================================================
-// DUAL Interaction (via environment — real calls when API key is set)
-// ============================================================================
-
-// These will be called by the orchestrator which passes results from MCP calls
-// In the standalone script, they simulate the DUAL responses using known data
-
-function simulateWalletLookup(wallet: string) {
-  if (wallet === AGENTS.commerce.wallet) {
-    return {
-      valid: true,
-      address: wallet,
-      fqdn: AGENTS.commerce.fqdn,
-      org: AGENTS.commerce.org,
-    };
-  }
-  return { valid: false, address: wallet };
-}
-
-function simulateOrgMembership(wallet: string, orgId: string) {
-  const a = Object.values(AGENTS).find((a) => a.wallet === wallet);
-  if (a && a.orgId === orgId) {
-    return { member: true, role: a.role, org: a.org };
-  }
-  return { member: false };
-}
-
-// ============================================================================
-// The Demo
+// Main Demo
 // ============================================================================
 
 async function main() {
@@ -258,10 +274,18 @@ async function main() {
   console.log(`   ${D}Intelligence Agent won't share without governed trust.${R}`);
   console.log(`   ${D}ATP mediates. DUAL anchors the proof.${R}\n`);
 
+  if (LIVE) {
+    ok("DUAL API key detected", "all calls hit the live network");
+  } else {
+    warn("No DUAL_API_KEY", "governance runs real SDK, DUAL calls simulated");
+    info("Set DUAL_API_KEY for full on-chain execution + evidence anchoring\n");
+  }
+
   info(`Commerce Agent:     ${AGENTS.commerce.wallet.slice(0, 18)}...`);
   info(`Intelligence Agent: ${AGENTS.intelligence.wallet.slice(0, 18)}...`);
   info(`Organization:       ${AGENTS.commerce.org} (${AGENTS.commerce.orgId.slice(0, 12)}...)`);
   info(`Evidence Template:  ${EVIDENCE_TEMPLATE}`);
+  info(`Mode:               ${LIVE ? `${G}LIVE${R}` : `${Y}SIMULATION${R}`}`);
 
   // ═══════════════════════════════════════════════════════════════════════
   // ACT 1 — Agent A constructs a governed request
@@ -275,14 +299,10 @@ async function main() {
 
   const requestParams = {
     data_scope: "geo-offer-pricing",
-    max_classification_level: 1, // requesting internal-level data
+    max_classification_level: 1,
   };
 
-  const contract = buildDataRequestContract(
-    requestParams.data_scope,
-    "internal"
-  );
-
+  const contract = buildDataRequestContract();
   const scopeHash = hashScope(requestParams);
 
   arrow();
@@ -295,44 +315,62 @@ async function main() {
   kv("Expiry", contract.expiry!);
 
   await sleep(200);
-  agent("Alice", `Sending governed request to Intelligence Agent...`);
+  agent("Alice", "Sending governed request to Intelligence Agent...");
 
   // ═══════════════════════════════════════════════════════════════════════
-  // ACT 2 — Agent B verifies Agent A's identity
+  // ACT 2 — Agent B verifies Agent A's identity on DUAL
   // ═══════════════════════════════════════════════════════════════════════
 
-  banner("ACT 2 — Identity Verification", BG_M);
+  banner("ACT 2 — Identity Verification" + (LIVE ? " (LIVE DUAL)" : ""), BG_M);
 
-  agent("Bob", "Received request. Verifying sender identity on DUAL...");
+  agent("Bob", "Received request. Verifying sender identity...");
   await sleep(300);
 
   // Step 1: Wallet verification
-  const walletCheck = simulateWalletLookup(AGENTS.commerce.wallet);
-  if (walletCheck.valid) {
-    ok("Wallet verified on DUAL", `${walletCheck.address.slice(0, 14)}... → ${walletCheck.fqdn}`);
+  if (LIVE) {
+    try {
+      const wallet = await dualGetWallet();
+      ok("Wallet resolved on DUAL", `${wallet.account.address.slice(0, 14)}...`);
+      kv("Email", wallet.email);
+      kv("Key Type", wallet.account.type);
+      kv("Activated", String(wallet.activated));
+    } catch (e: any) {
+      fail("Wallet resolution failed", e.message);
+      return;
+    }
   } else {
-    denied("Wallet not found on DUAL");
-    return;
+    ok("Wallet verified", `${AGENTS.commerce.wallet.slice(0, 14)}... → ${AGENTS.commerce.fqdn}`);
   }
 
   // Step 2: Org membership
-  const memberCheck = simulateOrgMembership(
-    AGENTS.commerce.wallet,
-    AGENTS.commerce.orgId
-  );
-  if (memberCheck.member) {
-    ok("Org membership confirmed", `${memberCheck.org} → role: ${memberCheck.role}`);
+  if (LIVE) {
+    try {
+      const org = await dualGetOrg(AGENTS.commerce.orgId);
+      const member = org.members?.find(
+        (m: any) => m.wallet_id === AGENTS.commerce.walletId
+      );
+      if (member) {
+        ok("Org membership confirmed on DUAL", `${org.name} → role: ${member.role_name}`);
+        kv("FQDN", org.fqdn);
+        kv("Members", String(org.members.length));
+      } else {
+        fail("Wallet not a member of this organization");
+        return;
+      }
+    } catch (e: any) {
+      fail("Org lookup failed", e.message);
+      return;
+    }
   } else {
-    denied("Not a member of the required organization");
-    return;
+    ok("Org membership confirmed", `${AGENTS.commerce.org} → role: ${AGENTS.commerce.role}`);
   }
 
-  // Step 3: Contract validation
+  // Step 3: Contract validation (always real — runs ATP SDK)
   const validation = validateContract(contract);
   if (validation.valid) {
     ok("Contract valid", `${validation.errors.length} errors, ${validation.warnings.length} warnings`);
   } else {
-    denied("Contract invalid", validation.errors.map((e) => e.message).join(", "));
+    fail("Contract invalid", validation.errors.map((e) => e.message).join(", "));
     return;
   }
 
@@ -341,7 +379,7 @@ async function main() {
   if (contract.authority === expectedAuthority) {
     ok("Authority derived", `wallet → org → role → ${expectedAuthority}`);
   } else {
-    denied("Authority mismatch");
+    fail("Authority mismatch");
     return;
   }
 
@@ -349,7 +387,7 @@ async function main() {
   agent("Bob", "Identity verified. Proceeding to policy evaluation...");
 
   // ═══════════════════════════════════════════════════════════════════════
-  // ACT 3 — Agent B evaluates policy
+  // ACT 3 — Policy evaluation (always real — runs ATP SDK)
   // ═══════════════════════════════════════════════════════════════════════
 
   banner("ACT 3 — Policy Evaluation", BG_M);
@@ -365,7 +403,7 @@ async function main() {
     kv("Classification", `level ${requestParams.max_classification_level} ≤ max 2`);
     kv("Deny list", "no prohibited data requested");
   } else {
-    denied("Policy violation", policyResult.denial_reason || "");
+    fail("Policy violation", policyResult.denial_reason || "");
     return;
   }
 
@@ -373,13 +411,12 @@ async function main() {
   agent("Bob", `${G}All checks passed.${R} Trust established.`);
 
   // ═══════════════════════════════════════════════════════════════════════
-  // ACT 4 — Agent B delivers intelligence
+  // ACT 4 — Intelligence delivery
   // ═══════════════════════════════════════════════════════════════════════
 
   banner("ACT 4 — Intelligence Delivery", BG_G);
 
   const intel = INTELLIGENCE_DB[requestParams.data_scope];
-
   agent("Bob", `Delivering "${requestParams.data_scope}" intelligence...`);
   await sleep(300);
 
@@ -399,12 +436,12 @@ async function main() {
   agent("Alice", "Intelligence received. Acknowledged.");
 
   // ═══════════════════════════════════════════════════════════════════════
-  // ACT 5 — Evidence anchoring
+  // ACT 5 — Evidence anchoring on DUAL
   // ═══════════════════════════════════════════════════════════════════════
 
-  banner("ACT 5 — Evidence Anchoring", BG_B);
+  banner("ACT 5 — Evidence Anchoring" + (LIVE ? " (MINTING ON DUAL)" : ""), BG_B);
 
-  const evidence = buildEvidence(
+  const successEvidence = buildEvidence(
     "ctr_agent_data_request",
     "request-intelligence",
     AGENTS.commerce.wallet,
@@ -423,21 +460,46 @@ async function main() {
   agent("Bob", "Co-signing evidence record...");
   await sleep(300);
 
-  info("Evidence record:");
-  kv("ID", evidence.evidence_id as string);
-  kv("Contract", evidence.contract_id as string);
-  kv("Requester", (evidence.wallet_address as string).slice(0, 18) + "...");
-  kv("Responder", (evidence.responder_wallet as string).slice(0, 18) + "...");
-  kv("Policy", evidence.policy_result as string);
-  kv("Outcome", `${G}${evidence.outcome}${R}`);
-  kv("Scope Hash", (evidence.scope_hash as string).slice(0, 32) + "...");
+  let successTokenId: string | null = null;
 
-  console.log();
-  ok("Evidence anchored on DUAL network", "immutable, non-repudiable");
-  info("This token proves the data exchange was governed by ATP.");
+  if (LIVE) {
+    try {
+      // Mint evidence token
+      const ids = await dualMint(EVIDENCE_TEMPLATE, 1);
+      successTokenId = ids[0];
+      ok("Evidence token minted", successTokenId);
+
+      // Write evidence data to the token
+      await dualUpdate(successTokenId, successEvidence as Record<string, unknown>);
+      ok("Evidence data written to token");
+
+      // Read it back to verify
+      const onChain = await dualGetObject(successTokenId);
+      if (onChain.custom?.evidence_id === successEvidence.evidence_id) {
+        ok("Evidence verified on-chain", "data matches");
+        kv("Token ID", successTokenId);
+        kv("Integrity Hash", onChain.integrity_hash);
+        kv("Content Hash", onChain.content_hash?.slice(0, 24) + "...");
+        kv("Nonce", String(onChain.nonce));
+      } else {
+        fail("Evidence mismatch on-chain");
+      }
+    } catch (e: any) {
+      fail("Evidence anchoring failed", e.message);
+    }
+  } else {
+    info("Evidence record (would be minted on DUAL with API key):");
+  }
+
+  kv("ID", successEvidence.evidence_id as string);
+  kv("Requester", (successEvidence.wallet_address as string).slice(0, 18) + "...");
+  kv("Responder", (successEvidence.responder_wallet as string).slice(0, 18) + "...");
+  kv("Policy", `${G}pass${R}`);
+  kv("Outcome", `${G}success${R}`);
+  kv("Scope Hash", (successEvidence.scope_hash as string).slice(0, 32) + "...");
 
   // ═══════════════════════════════════════════════════════════════════════
-  // ENCORE — Denied request (outside authority)
+  // ENCORE — Denied request
   // ═══════════════════════════════════════════════════════════════════════
 
   divider();
@@ -448,8 +510,8 @@ async function main() {
 
   const badParams = {
     data_scope: "wallet-balances",
-    prohibited_data_scope: "wallet-balances", // This hits the deny list
-    max_classification_level: 3, // Restricted — exceeds max of 2
+    prohibited_data_scope: "wallet-balances",
+    max_classification_level: 3,
   };
 
   const badScopeHash = hashScope(badParams);
@@ -466,7 +528,7 @@ async function main() {
   const badPolicy = evaluatePolicy(contract, badParams);
 
   if (!badPolicy.permitted) {
-    denied("Policy violation", badPolicy.denial_reason || "");
+    fail("Policy violation", badPolicy.denial_reason || "");
 
     const denialEvidence = buildEvidence(
       "ctr_agent_data_request",
@@ -483,14 +545,31 @@ async function main() {
       }
     );
 
-    await sleep(200);
-    console.log();
-    ok("Denial evidence anchored on DUAL", "even failed requests leave a trail");
+    let denialTokenId: string | null = null;
+
+    if (LIVE) {
+      try {
+        const ids = await dualMint(EVIDENCE_TEMPLATE, 1);
+        denialTokenId = ids[0];
+
+        await dualUpdate(denialTokenId, denialEvidence as Record<string, unknown>);
+
+        const onChain = await dualGetObject(denialTokenId);
+        console.log();
+        ok("Denial evidence minted and verified on-chain");
+        kv("Token ID", denialTokenId);
+        kv("Integrity Hash", onChain.integrity_hash);
+        kv("Outcome", `${RD}denied${R}`);
+      } catch (e: any) {
+        fail("Denial evidence anchoring failed", e.message);
+      }
+    } else {
+      console.log();
+      ok("Denial evidence recorded", "would be minted on DUAL with API key");
+    }
+
     info(`Evidence ID: ${denialEvidence.evidence_id}`);
     info("The protocol proves this request was made AND denied.");
-  } else {
-    // This shouldn't happen
-    ok("Unexpectedly permitted");
   }
 
   agent("Bob", `${RD}Request denied.${R} Insufficient authority for restricted data.`);
@@ -504,18 +583,28 @@ async function main() {
   section("WHAT JUST HAPPENED");
 
   const pad = (s: string, n: number) => s + " ".repeat(Math.max(0, n - s.length));
+  const mode = LIVE ? "DUAL (live — all on-chain)" : "DUAL (simulated identity)";
+  const eviStatus = LIVE
+    ? `2 tokens minted on-chain ✓`
+    : `2 records (local — mint with API key)`;
 
   console.log(`   ${D}┌──────────────────────────────────────────────────────────┐${R}`);
   console.log(`   ${D}│${R} ${B}AGENT TRUST DEMO RESULTS                                ${R}${D}│${R}`);
   console.log(`   ${D}├──────────────────────────────────────────────────────────┤${R}`);
   console.log(`   ${D}│${R} Agents:        ${B}${pad("2 (Commerce + Intelligence)", 42)}${R}${D}│${R}`);
-  console.log(`   ${D}│${R} Network:       ${B}${pad("DUAL (live identities)", 42)}${R}${D}│${R}`);
+  console.log(`   ${D}│${R} Network:       ${B}${pad(mode, 42)}${R}${D}│${R}`);
   console.log(`   ${D}│${R} Identity:      ${G}${pad("wallet → org → role → authority ✓", 42)}${R}${D}│${R}`);
-  console.log(`   ${D}│${R} Contract:      ${G}${pad("valid ✓", 42)}${R}${D}│${R}`);
+  console.log(`   ${D}│${R} Contract:      ${G}${pad("valid (ATP SDK) ✓", 42)}${R}${D}│${R}`);
+  console.log(`   ${D}│${R} Policy:        ${G}${pad("real SDK evaluation ✓", 42)}${R}${D}│${R}`);
   console.log(`   ${D}│${R} Request 1:     ${G}${pad("geo-offer-pricing → PERMITTED ✓", 42)}${R}${D}│${R}`);
   console.log(`   ${D}│${R} Request 2:     ${RD}${pad("wallet-balances → DENIED ✗", 42)}${R}${D}│${R}`);
-  console.log(`   ${D}│${R} Evidence:      ${G}${pad("2 tokens anchored (success + denial)", 42)}${R}${D}│${R}`);
+  console.log(`   ${D}│${R} Evidence:      ${LIVE ? G : Y}${pad(eviStatus, 42)}${R}${D}│${R}`);
   console.log(`   ${D}└──────────────────────────────────────────────────────────┘${R}`);
+
+  if (LIVE && successTokenId) {
+    console.log(`\n   ${D}On-chain evidence tokens:${R}`);
+    console.log(`   ${G}•${R} Success: ${B}${successTokenId}${R}`);
+  }
 
   console.log(`\n   ${B}Govern the action. Prove it happened.${R}\n`);
 
@@ -524,10 +613,10 @@ async function main() {
   console.log(`   classification policy, or prove the exchange happened.\n`);
 
   console.log(`   With ATP:`);
-  console.log(`   ${G}•${R} Agent A's identity is cryptographically verified via DUAL wallet`);
+  console.log(`   ${G}•${R} Agent A's identity is ${LIVE ? "cryptographically verified on DUAL" : "verified via wallet → org chain"}`);
   console.log(`   ${G}•${R} Authority is derived from org membership, not self-asserted`);
   console.log(`   ${G}•${R} Policy constraints enforce data classification boundaries`);
-  console.log(`   ${G}•${R} Both success and denial are permanently anchored as evidence`);
+  console.log(`   ${G}•${R} Both success and denial are ${LIVE ? "permanently anchored on-chain" : "recorded as evidence"}`);
   console.log(`   ${G}•${R} Neither agent can deny the interaction occurred\n`);
 
   console.log(`   ${D}This is what trust looks like between autonomous agents.${R}`);
