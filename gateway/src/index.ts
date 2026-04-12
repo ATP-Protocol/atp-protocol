@@ -66,6 +66,24 @@ export { resolveCredentials, buildInjection } from "./middleware/credentials";
 export type { CredentialResult } from "./middleware/credentials";
 export { captureEvidence } from "./middleware/evidence";
 export type { EvidenceCaptureInput } from "./middleware/evidence";
+export { anchorEvidence, retryPendingAnchors } from "./middleware/anchor";
+export type { AnchorEvidenceInput } from "./middleware/anchor";
+
+// DUAL Integration
+export { MockDUALClient, RealDUALClient } from "./dual/client";
+export type { IDUALClient } from "./dual/client";
+export { DUALAuthorityResolver } from "./dual/authority";
+export type {
+  WalletVerification,
+  DUALOrganization,
+  DUALOrganizationMember,
+  DUALOrganizationRole,
+  DUALObject,
+  AnchorResult,
+  AttestationVerification,
+  ActionResult,
+  DUALNetworkConfig,
+} from "./dual/types";
 
 // Utilities
 export { sha256, generateIdempotencyKey, canonicalJson, parseDuration } from "./util";

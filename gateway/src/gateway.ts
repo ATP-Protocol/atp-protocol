@@ -27,7 +27,11 @@ import { checkAuthority } from "./middleware/authority";
 import { evaluatePolicy } from "./middleware/policy";
 import { resolveCredentials, buildInjection } from "./middleware/credentials";
 import { captureEvidence } from "./middleware/evidence";
+import { anchorEvidence } from "./middleware/anchor";
 import { generateIdempotencyKey, generateExecutionId, parseDuration } from "./util";
+import type { IDUALClient } from "./dual/client";
+import { MockDUALClient, RealDUALClient } from "./dual/client";
+import { DUALAuthorityResolver } from "./dual/authority";
 
 export type ToolHandler = (
   params: Record<string, unknown>,
@@ -48,6 +52,8 @@ export class ATPGateway {
   readonly evidence: EvidenceStore;
   readonly idempotency: IdempotencyStore;
   readonly approvals: ApprovalStore;
+  readonly dualClient: IDUALClient | null;
+  readonly dualAuthorityResolver: DUALAuthorityResolver | null;
 
   private tools = new Map<string, RegisteredTool>();
   private gatewaySecret: string;
@@ -58,6 +64,7 @@ export class ATPGateway {
       port: config?.port ?? 3100,
       conformance_level: config?.conformance_level ?? "verified",
       dual_integration: config?.dual_integration ?? false,
+      dual: config?.dual,
       execution_timeout_ms: config?.execution_timeout_ms ?? 30_000,
       max_execution_timeout_ms: config?.max_execution_timeout_ms ?? 300_000,
     };
@@ -69,6 +76,29 @@ export class ATPGateway {
     this.idempotency = new IdempotencyStore();
     this.approvals = new ApprovalStore();
     this.gatewaySecret = uuidv4(); // In production, loaded from secure config
+
+    // Initialize DUAL client if enabled
+    if (config?.dual_integration && config?.dual?.enabled) {
+      this.dualClient = new RealDUALClient(
+        config.dual.endpoint,
+        config.dual.network,
+        config.dual.api_key
+      );
+      this.dualAuthorityResolver = new DUALAuthorityResolver(
+        this.dualClient,
+        config.dual.cache_ttl
+      );
+    } else if (config?.dual_integration) {
+      // DUAL integration enabled but no endpoint: use mock for testing
+      this.dualClient = new MockDUALClient();
+      this.dualAuthorityResolver = new DUALAuthorityResolver(
+        this.dualClient,
+        config?.dual?.cache_ttl ?? 60
+      );
+    } else {
+      this.dualClient = null;
+      this.dualAuthorityResolver = null;
+    }
   }
 
   /**
@@ -266,7 +296,21 @@ export class ATPGateway {
     );
 
     // ---------------------------------------------------------------------------
-    // 8. Build response
+    // 8. DUAL Integration: Anchor evidence (Spec Section 14.5)
+    // ---------------------------------------------------------------------------
+    if (this.config.dual_integration && this.dualClient && this.config.dual?.anchor_evidence) {
+      anchorEvidence({
+        evidence: evidenceRecord,
+        dualClient: this.dualClient,
+        evidenceStore: this.evidence,
+      }).catch((error) => {
+        // Log but don't fail the execution
+        console.error(`Failed to anchor evidence asynchronously: ${error}`);
+      });
+    }
+
+    // ---------------------------------------------------------------------------
+    // 9. Build response
     // ---------------------------------------------------------------------------
     const executionResponse: ExecutionResponse = {
       execution_id: executionId,
@@ -343,6 +387,9 @@ export class ATPGateway {
       atp_version: "1.0.0",
       conformance_level: this.config.conformance_level,
       dual_integration: this.config.dual_integration,
+      dual_network: this.config.dual?.network ?? null,
+      dual_anchor_enabled: this.config.dual?.anchor_evidence ?? false,
+      dual_wallet_verify: this.config.dual?.verify_wallets ?? false,
     };
   }
 

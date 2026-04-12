@@ -6,3 +6,5 @@ export { resolveCredentials, buildInjection } from "./credentials";
 export type { CredentialResult } from "./credentials";
 export { captureEvidence } from "./evidence";
 export type { EvidenceCaptureInput } from "./evidence";
+export { anchorEvidence, retryPendingAnchors } from "./anchor";
+export type { AnchorEvidenceInput } from "./anchor";

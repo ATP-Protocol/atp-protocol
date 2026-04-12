@@ -140,11 +140,22 @@ export interface StoredCredential {
 // Gateway Config
 // ---------------------------------------------------------------------------
 
+export interface DUALNetworkConfig {
+  enabled: boolean;
+  endpoint: string;
+  api_key?: string;
+  network: "mainnet" | "testnet";
+  anchor_evidence: boolean;
+  verify_wallets: boolean;
+  cache_ttl: number;  // seconds
+}
+
 export interface GatewayConfig {
   gateway_id: string;
   port: number;
   conformance_level: "aware" | "compatible" | "verified" | "attested";
   dual_integration: boolean;
+  dual?: DUALNetworkConfig;
   execution_timeout_ms: number;
   max_execution_timeout_ms: number;
 }
