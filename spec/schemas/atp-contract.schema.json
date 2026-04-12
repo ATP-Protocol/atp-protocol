@@ -1,0 +1,127 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atp-protocol.org/schemas/atp-contract/v1.0.0",
+  "title": "ATP Execution Contract",
+  "description": "Defines authority, policy, approval, credential access, and evidence requirements for governed agent execution under the Agent Trust Protocol.",
+  "type": "object",
+  "required": ["version", "authority", "actions", "attestation"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version of the contract format."
+    },
+    "authority": {
+      "type": "string",
+      "pattern": "^org\\..+\\..+$",
+      "description": "Organization-scoped authority URI. Format: org.{domain}.{permission}. Validated against the organization's capability registry."
+    },
+    "template": {
+      "type": "string",
+      "description": "ATP template ID. References a reusable policy template registered on DUAL."
+    },
+    "actions": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Permitted action names. The agent may only invoke actions listed here."
+    },
+    "scope": {
+      "type": "object",
+      "description": "Action-specific constraints. Schema varies by action type. These are enforceable policy constraints evaluated before execution, not prompt guidelines.",
+      "additionalProperties": true
+    },
+    "approval": {
+      "type": "object",
+      "description": "Approval configuration. Defines whether human authorization is required and how it is obtained.",
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Whether approval is mandatory for this action."
+        },
+        "required_above": {
+          "type": ["number", "null"],
+          "description": "Monetary threshold above which approval becomes mandatory. Null means always required (if required is true)."
+        },
+        "approver_role": {
+          "type": "string",
+          "description": "Organizational role authorized to approve this action."
+        },
+        "timeout": {
+          "type": "string",
+          "pattern": "^P",
+          "description": "ISO 8601 duration. How long before approval times out. After timeout, escalation path is followed."
+        },
+        "escalation_path": {
+          "type": "string",
+          "description": "Comma-separated organizational roles for escalation if primary approver is unavailable."
+        }
+      }
+    },
+    "credentials": {
+      "type": "object",
+      "description": "Credential brokerage configuration. Defines how downstream tool credentials are injected.",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "Credential provider identifier (e.g., gmail-api, stripe-api, internal-db)."
+        },
+        "scope": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Credential scope constraints. Limits what the injected credential can do."
+        },
+        "inject_as": {
+          "type": "string",
+          "enum": ["oauth_token", "api_key", "bearer_token", "basic_auth", "custom"],
+          "description": "How the credential is injected into the downstream request."
+        },
+        "fail_closed": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, credential injection failure causes action denial. Must be true for production contracts."
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "description": "Expected output configuration. Defines the governed object created or modified by this action.",
+      "properties": {
+        "object_type": {
+          "type": "string",
+          "description": "DUAL object type for the output."
+        },
+        "initial_state": {
+          "type": "string",
+          "description": "Initial state of the output object after successful execution."
+        },
+        "schema_ref": {
+          "type": "string",
+          "description": "Reference to a JSON Schema defining the output object structure."
+        }
+      }
+    },
+    "attestation": {
+      "type": "string",
+      "enum": ["full", "light", "none"],
+      "description": "Evidence level. 'full' records complete execution context on DUAL. 'light' records action metadata only. 'none' skips attestation (development only)."
+    },
+    "revocable": {
+      "type": "boolean",
+      "default": true,
+      "description": "Whether this contract can be revoked. Revocation immediately invalidates all pending approvals."
+    },
+    "expiry": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 datetime. Absolute contract expiration. After this time, no actions can be executed under this contract."
+    },
+    "idempotency": {
+      "type": "string",
+      "enum": ["gateway-enforced", "tool-native", "unsafe"],
+      "default": "gateway-enforced",
+      "description": "Idempotency model. 'gateway-enforced' means ATP assigns idempotency keys and prevents duplicate execution. 'tool-native' means the downstream tool handles idempotency. 'unsafe' means retries may cause duplicate side effects."
+    }
+  },
+  "additionalProperties": false
+}
