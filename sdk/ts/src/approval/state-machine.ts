@@ -273,18 +273,8 @@ function generateNonce(): string {
 }
 
 function computeScopeHash(scope: Record<string, unknown>): string {
-  // Deterministic JSON serialization for scope hashing
+  const { createHash } = require("crypto") as typeof import("crypto");
   const canonical = JSON.stringify(scope, Object.keys(scope).sort());
-  // In a real implementation, this would use SHA-256
-  // For the SDK, we provide a placeholder that gateways override
-  return `sha256:${simpleHash(canonical)}`;
-}
-
-function simpleHash(input: string): string {
-  let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    const char = input.charCodeAt(i);
-    hash = ((hash << 5) - hash + char) | 0;
-  }
-  return Math.abs(hash).toString(16).padStart(8, "0");
+  const hash = createHash("sha256").update(canonical).digest("hex");
+  return `sha256:${hash}`;
 }
