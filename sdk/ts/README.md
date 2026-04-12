@@ -1,0 +1,160 @@
+# @atp-protocol/sdk
+
+TypeScript SDK for the [Agent Trust Protocol (ATP)](https://github.com/ATP-Protocol/atp-protocol).
+
+Govern AI agent execution with authority checks, policy evaluation, approval flows, credential brokerage, and evidence capture.
+
+## Install
+
+```bash
+npm install @atp-protocol/sdk
+```
+
+## Quick start
+
+### Govern an MCP tool
+
+```typescript
+import { atpGovern } from "@atp-protocol/sdk";
+
+// Wrap any MCP tool handler with ATP governance
+server.tool("send-email", atpGovern({
+  contract: {
+    version: "1.0.0",
+    authority: "org.procurement.send-email",
+    actions: ["send-email"],
+    attestation: "full",
+    approval: {
+      required: true,
+      approver_role: "procurement_manager",
+      timeout: "PT4H",
+      escalation_path: "department_head,cfo"
+    },
+    credentials: {
+      provider: "gmail-api",
+      scope: ["send"],
+      inject_as: "oauth_token",
+      fail_closed: true
+    }
+  },
+  gateway: "https://gateway.your-org.com"
+}, sendEmailHandler));
+```
+
+### Validate a contract
+
+```typescript
+import { validateContract } from "@atp-protocol/sdk";
+
+const result = validateContract({
+  version: "1.0.0",
+  authority: "org.finance.approve-payment",
+  actions: ["approve-payment"],
+  attestation: "full"
+});
+
+if (!result.valid) {
+  console.error("Errors:", result.errors);
+}
+if (result.warnings.length > 0) {
+  console.warn("Warnings:", result.warnings);
+}
+```
+
+### Evaluate policy locally
+
+```typescript
+import { evaluatePolicy } from "@atp-protocol/sdk";
+
+const contract = {
+  version: "1.0.0",
+  authority: "org.procurement.send-email",
+  actions: ["send-email"],
+  attestation: "full",
+  scope: {
+    recipient_domain: ["@approved-vendors.com", "@internal.company.com"],
+    max_attachments: 3,
+    prohibited_content: ["payment instructions", "wire transfer"]
+  }
+};
+
+const result = evaluatePolicy(contract, {
+  recipient_domain: "user@approved-vendors.com",
+  max_attachments: 1
+});
+
+console.log(result.permitted);  // true
+```
+
+### Approval state machine
+
+```typescript
+import { ApprovalFlow } from "@atp-protocol/sdk";
+
+const flow = new ApprovalFlow(
+  "ctr_procurement_email",
+  "send-email",
+  { recipient: "vendor@approved-vendors.com" },
+  "0xAgentWallet"
+);
+
+// Progress through the state machine
+flow.transition("deliver");   // REQUESTED → PENDING_REVIEW
+flow.transition("approve");   // PENDING_REVIEW → APPROVED
+
+if (flow.isApproved()) {
+  // Proceed to execution
+  const record = flow.toRecord("0xApproverWallet", "procurement_manager");
+}
+```
+
+### Load a contract from file
+
+```typescript
+import { loadContract } from "@atp-protocol/sdk";
+
+const contract = await loadContract("contracts/procurement-email.json");
+```
+
+## API
+
+### Governance
+
+| Function | Description |
+|----------|-------------|
+| `atpGovern(options, handler)` | Wrap a tool handler with ATP governance |
+| `createGovernedContext(options)` | Create a governed execution context for manual flow control |
+
+### Contract
+
+| Function | Description |
+|----------|-------------|
+| `validateContract(contract)` | Validate an ATP contract against the spec |
+| `isContractExpired(contract)` | Check if a contract has expired |
+| `requiresApproval(contract, amount?)` | Check if approval is required |
+| `parseEscalationPath(contract)` | Parse escalation path into role list |
+| `loadContract(path)` | Load and validate a contract from a JSON file |
+| `loadContracts(dir)` | Load all contracts from a directory |
+
+### Policy
+
+| Function | Description |
+|----------|-------------|
+| `evaluatePolicy(contract, params)` | Evaluate request params against contract scope |
+| `mergeConstraints(...policySets)` | Merge multiple policy sets (most restrictive wins) |
+
+### Approval
+
+| Class/Function | Description |
+|----------------|-------------|
+| `ApprovalFlow` | Approval state machine (9 states, deterministic transitions) |
+| `canTransition(state, trigger)` | Check if a transition is valid |
+| `validTriggers(state)` | Get all valid triggers for a state |
+
+## Conformance
+
+This SDK enables **ATP-Aware** and **ATP-Compatible** conformance levels out of the box. For **ATP-Verified** and **ATP-Attested**, connect to an ATP gateway.
+
+## License
+
+Apache 2.0

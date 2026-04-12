@@ -60,45 +60,63 @@ server.tool("send-email", atpGovern({
 }, sendEmailHandler));
 ```
 
+## Protocol specification
+
+The full protocol specification is available at [`spec/ATP-SPEC-v1.md`](spec/ATP-SPEC-v1.md) (v1.0.0-draft.2).
+
+**14 sections covering:**
+
+| Section | Topic |
+|---------|-------|
+| 1–4 | Terminology, Architecture, Core Primitives, Execution Contract |
+| 5 | Authority Model — delegation chains, hierarchical resolution, cross-org federation |
+| 6 | Policy Evaluation — 8 constraint types, evaluation order, conflict resolution |
+| 7 | Approval State Machine — 9 states, cryptographic binding, escalation |
+| 8 | Credential Brokerage — broker model, scope constraints, fail-closed |
+| 9 | Execution Semantics — 6 outcome types, mediation model, side-effect handling |
+| 10 | Evidence and Attestation — evidence schema, DUAL anchoring, verification |
+| 11 | Operational Semantics — idempotency, unknown outcomes, revocation, failover |
+| 12 | Conformance Levels — Aware → Compatible → Verified → Attested |
+| 13 | Security Considerations — 15 threat classes, enforcement boundaries |
+| 14 | DUAL Network Integration — wallet auth, object lifecycle, attestation API |
+
 ## What's in this repo
 
 ```
 atp-protocol/
 ├── spec/                    # Protocol specification
-│   ├── ATP-SPEC-v1.md       # Core protocol spec (draft)
+│   ├── ATP-SPEC-v1.md       # Core protocol spec (v1.0.0-draft.2)
 │   ├── schemas/             # Canonical JSON schemas
 │   │   └── atp-contract.schema.json
 │   └── rfcs/                # RFC process for spec evolution
 │       └── 0000-template.md
 ├── docs/                    # Documentation and guides
 │   └── POSITIONING.md       # Public strategy document
-├── examples/                # Getting started examples
-│   ├── hello-world/
-│   └── mcp-governed-tool/
 ├── LICENSE                  # Apache 2.0
 ├── CONTRIBUTING.md          # Contribution guidelines
 └── CODE_OF_CONDUCT.md       # Community standards
 ```
 
-**SDKs and gateway** will ship in dedicated repos as the project progresses:
+**SDKs and gateway** will ship in dedicated repos:
 
 | Repo | Status | Description |
 |------|--------|-------------|
 | `atp-protocol` | **Active** | Spec, schemas, docs |
-| `atp-sdk-ts` | Planned | TypeScript SDK (`@atp-protocol/sdk` on npm) |
+| `atp-sdk-ts` | In progress | TypeScript SDK (`@atp-protocol/sdk` on npm) |
 | `atp-sdk-python` | Planned | Python SDK (`atp-protocol` on PyPI) |
 | `atp-gateway` | Planned | Reference gateway implementation |
+| `atp-conformance` | Planned | Conformance test suite |
 
 ## Conformance levels
 
 ATP is designed as a layered standard. Adoption does not have to be all-or-nothing.
 
-| Level | What it means |
-|-------|---------------|
-| **ATP-Aware** | System understands ATP contracts and governance metadata |
-| **ATP-Compatible** | System evaluates ATP policies and participates in governed execution flows |
-| **ATP-Verified** | System passes the published conformance suite |
-| **ATP-Attested** | System produces verifiable evidence anchored through DUAL's attestation layer |
+| Level | What it means | Key requirements |
+|-------|---------------|------------------|
+| **ATP-Aware** | System understands ATP contracts and governance metadata | Parse contracts, interpret metadata, structured logging |
+| **ATP-Compatible** | System evaluates ATP policies and participates in governed execution | Authority checks, policy evaluation, approval state machine, fail-closed |
+| **ATP-Verified** | System passes the published conformance suite | Credential brokerage, all outcome types, idempotency, revocation, unknown outcome handling |
+| **ATP-Attested** | System produces verifiable evidence anchored through DUAL | DUAL wallet identity, organization binding, evidence anchoring, attestation verification |
 
 ## The DUAL relationship
 
@@ -112,11 +130,9 @@ Open source gives ATP reach. DUAL gives ATP depth.
 
 ## Status
 
-This project is in **Draft** status. The spec is under active development.
-
 - [x] Protocol positioning and strategy
 - [x] Core contract schema
-- [ ] Full protocol specification (v1 draft)
+- [x] Full protocol specification (14 sections, v1.0.0-draft.2)
 - [ ] TypeScript SDK
 - [ ] Python SDK
 - [ ] Reference gateway
