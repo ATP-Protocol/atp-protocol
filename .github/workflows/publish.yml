@@ -1,0 +1,110 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish-sdk-ts:
+    name: Publish @atp-protocol/sdk
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - name: Install dependencies
+        working-directory: sdk/ts
+        run: npm install
+      - name: Build
+        working-directory: sdk/ts
+        run: npm run build
+      - name: Test
+        working-directory: sdk/ts
+        run: npx vitest run
+      - name: Publish
+        working-directory: sdk/ts
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-gateway:
+    name: Publish @atp-protocol/gateway
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - name: Install dependencies
+        working-directory: gateway
+        run: npm install
+      - name: Build
+        working-directory: gateway
+        run: npm run build
+      - name: Test
+        working-directory: gateway
+        run: npx vitest run
+      - name: Publish
+        working-directory: gateway
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-conformance:
+    name: Publish @atp-protocol/conformance
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org/
+      - name: Install dependencies
+        working-directory: conformance
+        run: npm install
+      - name: Build
+        working-directory: conformance
+        run: npm run build
+      - name: Test
+        working-directory: conformance
+        run: npx jest
+      - name: Publish
+        working-directory: conformance
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  publish-sdk-python:
+    name: Publish atp-protocol (PyPI)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install build tools
+        run: pip install build twine
+      - name: Build
+        working-directory: sdk/python
+        run: python -m build
+      - name: Publish to PyPI
+        working-directory: sdk/python
+        run: twine upload dist/*
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

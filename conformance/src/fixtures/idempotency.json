@@ -1,0 +1,120 @@
+{
+  "fixtures": [
+    {
+      "name": "idempotency_deterministic_same_input",
+      "description": "Same input produces same idempotency key",
+      "contract_id": "ct_idem_001",
+      "action": "deploy",
+      "params1": {
+        "target": "prod",
+        "version": "1.2.3"
+      },
+      "params2": {
+        "target": "prod",
+        "version": "1.2.3"
+      },
+      "same_key": true
+    },
+    {
+      "name": "idempotency_different_target",
+      "description": "Different target produces different key",
+      "contract_id": "ct_idem_002",
+      "action": "deploy",
+      "params1": {
+        "target": "staging",
+        "version": "1.0.0"
+      },
+      "params2": {
+        "target": "prod",
+        "version": "1.0.0"
+      },
+      "same_key": false
+    },
+    {
+      "name": "idempotency_different_version",
+      "description": "Different version produces different key",
+      "contract_id": "ct_idem_003",
+      "action": "deploy",
+      "params1": {
+        "target": "prod",
+        "version": "1.0.0"
+      },
+      "params2": {
+        "target": "prod",
+        "version": "1.0.1"
+      },
+      "same_key": false
+    },
+    {
+      "name": "idempotency_different_action",
+      "description": "Different action produces different key",
+      "contract_id": "ct_idem_004",
+      "action": "deploy",
+      "params1": {
+        "target": "prod"
+      },
+      "params2": null,
+      "same_key": false
+    },
+    {
+      "name": "idempotency_different_contract",
+      "description": "Different contract_id produces different key",
+      "contract_id": "ct_idem_005",
+      "action": "deploy",
+      "params1": {
+        "target": "prod"
+      },
+      "params2": null,
+      "same_key": false
+    },
+    {
+      "name": "idempotency_empty_params",
+      "description": "Idempotency key can be computed with empty params",
+      "contract_id": "ct_idem_006",
+      "action": "read_config",
+      "params1": {},
+      "params2": {},
+      "same_key": true
+    },
+    {
+      "name": "idempotency_complex_params",
+      "description": "Complex nested params are deterministically hashed",
+      "contract_id": "ct_idem_007",
+      "action": "configure",
+      "params1": {
+        "settings": {
+          "enabled": true,
+          "timeout": 5000,
+          "retries": 3
+        },
+        "tags": ["prod", "critical"]
+      },
+      "params2": {
+        "settings": {
+          "enabled": true,
+          "timeout": 5000,
+          "retries": 3
+        },
+        "tags": ["prod", "critical"]
+      },
+      "same_key": true
+    },
+    {
+      "name": "idempotency_param_order_irrelevant",
+      "description": "Parameter order does not affect key (JSON canonical form)",
+      "contract_id": "ct_idem_008",
+      "action": "update",
+      "params1": {
+        "a": 1,
+        "b": 2,
+        "c": 3
+      },
+      "params2": {
+        "c": 3,
+        "a": 1,
+        "b": 2
+      },
+      "same_key": true
+    }
+  ]
+}

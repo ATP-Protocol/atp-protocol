@@ -1,0 +1,286 @@
+{
+  "fixtures": [
+    {
+      "name": "enumeration_permit",
+      "description": "Enumeration policy permits value in list",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "deploy",
+            "policy": {
+              "type": "enumeration",
+              "values": ["staging", "prod"]
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "deploy",
+        "target": "staging"
+      },
+      "expected_permitted": true,
+      "expected_denial_reason": null
+    },
+    {
+      "name": "enumeration_deny",
+      "description": "Enumeration policy denies value not in list",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "deploy",
+            "policy": {
+              "type": "enumeration",
+              "values": ["staging", "prod"]
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "deploy",
+        "target": "dev"
+      },
+      "expected_permitted": false,
+      "expected_denial_reason": "not_in_enumeration"
+    },
+    {
+      "name": "domain_permit",
+      "description": "Domain policy permits matching domain",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "connect",
+            "policy": {
+              "type": "domain",
+              "pattern": "*.example.com"
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "connect",
+        "host": "api.example.com"
+      },
+      "expected_permitted": true,
+      "expected_denial_reason": null
+    },
+    {
+      "name": "domain_deny",
+      "description": "Domain policy denies non-matching domain",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "connect",
+            "policy": {
+              "type": "domain",
+              "pattern": "*.example.com"
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "connect",
+        "host": "malicious.other.com"
+      },
+      "expected_permitted": false,
+      "expected_denial_reason": "domain_not_allowed"
+    },
+    {
+      "name": "numeric_max_permit",
+      "description": "Numeric max policy permits value <= max",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "request_resources",
+            "policy": {
+              "type": "numeric",
+              "max": 1000
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "request_resources",
+        "amount": 500
+      },
+      "expected_permitted": true,
+      "expected_denial_reason": null
+    },
+    {
+      "name": "numeric_max_deny",
+      "description": "Numeric max policy denies value > max",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "request_resources",
+            "policy": {
+              "type": "numeric",
+              "max": 1000
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "request_resources",
+        "amount": 1500
+      },
+      "expected_permitted": false,
+      "expected_denial_reason": "exceeds_maximum"
+    },
+    {
+      "name": "boolean_constraint_true",
+      "description": "Boolean policy permits when constraint is true",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "enable_feature",
+            "policy": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "enable_feature",
+        "enabled": true
+      },
+      "expected_permitted": true,
+      "expected_denial_reason": null
+    },
+    {
+      "name": "boolean_constraint_false",
+      "description": "Boolean policy denies when constraint is false",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "enable_feature",
+            "policy": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "enable_feature",
+        "enabled": false
+      },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_not_met"
+    },
+    {
+      "name": "deny_list_permit",
+      "description": "Deny list policy permits value not in deny list",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "run_command",
+            "policy": {
+              "type": "deny_list",
+              "denied": ["rm -rf", "dd if=/dev/zero", "mkfs"]
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "run_command",
+        "command": "ls -la"
+      },
+      "expected_permitted": true,
+      "expected_denial_reason": null
+    },
+    {
+      "name": "deny_list_deny",
+      "description": "Deny list policy denies value in deny list",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "run_command",
+            "policy": {
+              "type": "deny_list",
+              "denied": ["rm -rf", "dd if=/dev/zero", "mkfs"]
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "run_command",
+        "command": "rm -rf /"
+      },
+      "expected_permitted": false,
+      "expected_denial_reason": "in_deny_list"
+    },
+    {
+      "name": "no_scope_permit",
+      "description": "Policy with no scope always permits",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "read_data"
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "read_data",
+        "resource": "anything"
+      },
+      "expected_permitted": true,
+      "expected_denial_reason": null
+    },
+    {
+      "name": "action_not_in_contract",
+      "description": "Action not defined in contract is denied",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "deploy",
+            "policy": {
+              "type": "enumeration",
+              "values": ["staging"]
+            }
+          }
+        ],
+        "attestation": { "level": "aware" }
+      },
+      "params": {
+        "action": "destroy",
+        "target": "anything"
+      },
+      "expected_permitted": false,
+      "expected_denial_reason": "action_not_defined"
+    }
+  ]
+}

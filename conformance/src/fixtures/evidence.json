@@ -1,0 +1,129 @@
+{
+  "fixtures": [
+    {
+      "name": "evidence_all_fields",
+      "description": "Evidence record contains all required fields (18 total)",
+      "input": {
+        "contract_id": "ct_12345678",
+        "contract_version": "1.0.0",
+        "action_name": "deploy",
+        "principal_id": "principal_user_123",
+        "principal_type": "user",
+        "agent_id": "agent_gateway_prod",
+        "agent_type": "gateway",
+        "request_timestamp": "2026-04-12T14:30:00Z",
+        "request_hash": "sha256:abc123def456",
+        "params": {
+          "target": "prod"
+        },
+        "approval_state": "APPROVED",
+        "approval_id": "appr_xyz789",
+        "response_status": 200,
+        "response_body": {
+          "status": "success"
+        },
+        "outcome": "success",
+        "execution_duration_ms": 2500,
+        "organizational_unit": "platform"
+      },
+      "expected_fields": [
+        "evidence_id",
+        "execution_id",
+        "contract_id",
+        "contract_version",
+        "action_name",
+        "principal_id",
+        "principal_type",
+        "agent_id",
+        "agent_type",
+        "request_timestamp",
+        "request_hash",
+        "params",
+        "approval_state",
+        "approval_id",
+        "response_status",
+        "outcome",
+        "execution_duration_ms",
+        "organizational_unit"
+      ]
+    },
+    {
+      "name": "evidence_minimal_fields",
+      "description": "Evidence record with minimal required fields",
+      "input": {
+        "contract_id": "ct_87654321",
+        "action_name": "read",
+        "principal_id": "principal_user_456",
+        "agent_id": "agent_system",
+        "request_timestamp": "2026-04-12T15:00:00Z",
+        "request_hash": "sha256:xyz789abc123",
+        "outcome": "success"
+      },
+      "expected_fields": [
+        "evidence_id",
+        "execution_id",
+        "contract_id",
+        "action_name",
+        "principal_id",
+        "agent_id",
+        "request_timestamp",
+        "request_hash",
+        "outcome"
+      ]
+    },
+    {
+      "name": "evidence_with_approval",
+      "description": "Evidence record with approval context",
+      "input": {
+        "contract_id": "ct_approval_001",
+        "action_name": "change_config",
+        "principal_id": "principal_user_789",
+        "agent_id": "agent_api",
+        "request_timestamp": "2026-04-12T16:00:00Z",
+        "request_hash": "sha256:config_hash",
+        "approval_state": "APPROVED",
+        "approval_id": "appr_config_001",
+        "outcome": "success"
+      },
+      "expected_fields": [
+        "evidence_id",
+        "execution_id",
+        "contract_id",
+        "action_name",
+        "principal_id",
+        "agent_id",
+        "request_timestamp",
+        "request_hash",
+        "approval_state",
+        "approval_id",
+        "outcome"
+      ]
+    },
+    {
+      "name": "evidence_with_failure",
+      "description": "Evidence record documenting action failure",
+      "input": {
+        "contract_id": "ct_fail_001",
+        "action_name": "deploy",
+        "principal_id": "principal_user_999",
+        "agent_id": "agent_gateway",
+        "request_timestamp": "2026-04-12T17:00:00Z",
+        "request_hash": "sha256:fail_hash",
+        "response_status": 500,
+        "outcome": "failure",
+        "execution_duration_ms": 1000
+      },
+      "expected_fields": [
+        "evidence_id",
+        "execution_id",
+        "contract_id",
+        "action_name",
+        "principal_id",
+        "agent_id",
+        "request_timestamp",
+        "request_hash",
+        "outcome"
+      ]
+    }
+  ]
+}

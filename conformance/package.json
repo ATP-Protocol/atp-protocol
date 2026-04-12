@@ -1,0 +1,70 @@
+{
+  "name": "@atp-protocol/conformance",
+  "version": "0.1.0",
+  "description": "ATP conformance test suite for validating protocol implementations",
+  "license": "MIT",
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/esm/index.d.ts"
+    },
+    "./fixtures": {
+      "import": "./dist/esm/fixtures/index.js",
+      "require": "./dist/cjs/fixtures/index.js",
+      "types": "./dist/esm/fixtures/index.d.ts"
+    },
+    "./runner": {
+      "import": "./dist/esm/runner.js",
+      "require": "./dist/cjs/runner.js",
+      "types": "./dist/esm/runner.d.ts"
+    },
+    "./types": {
+      "import": "./dist/esm/types.js",
+      "require": "./dist/cjs/types.js",
+      "types": "./dist/esm/types.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src --ext .ts",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build && npm run test"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.40.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.0.0"
+  },
+  "keywords": [
+    "atp",
+    "agent-trust-protocol",
+    "conformance",
+    "testing",
+    "gateway",
+    "verification",
+    "compliance"
+  ],
+  "files": [
+    "dist",
+    "src/fixtures"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/atp-protocol"
+  }
+}

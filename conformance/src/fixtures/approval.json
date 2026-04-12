@@ -1,0 +1,148 @@
+{
+  "fixtures": [
+    {
+      "name": "happy_path_approval",
+      "description": "Happy path: REQUESTED -> PENDING_REVIEW -> APPROVED",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "request",
+          "expected_next_state": "PENDING_REVIEW",
+          "expected_error": null
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "approve",
+          "expected_next_state": "APPROVED",
+          "expected_error": null
+        }
+      ]
+    },
+    {
+      "name": "approval_denial",
+      "description": "Denial path: REQUESTED -> PENDING_REVIEW -> DENIED",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "request",
+          "expected_next_state": "PENDING_REVIEW",
+          "expected_error": null
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "deny",
+          "expected_next_state": "DENIED",
+          "expected_error": null
+        }
+      ]
+    },
+    {
+      "name": "approval_timeout_escalation",
+      "description": "Timeout with escalation: PENDING_REVIEW -> ESCALATED",
+      "transitions": [
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "timeout",
+          "expected_next_state": "ESCALATED",
+          "expected_error": null
+        }
+      ]
+    },
+    {
+      "name": "revoke_from_pending",
+      "description": "Revocation from PENDING_REVIEW -> REVOKED",
+      "transitions": [
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "revoke",
+          "expected_next_state": "REVOKED",
+          "expected_error": null
+        }
+      ]
+    },
+    {
+      "name": "revoke_from_approved",
+      "description": "Revocation from APPROVED -> REVOKED",
+      "transitions": [
+        {
+          "state": "APPROVED",
+          "trigger": "revoke",
+          "expected_next_state": "REVOKED",
+          "expected_error": null
+        }
+      ]
+    },
+    {
+      "name": "revoke_from_escalated",
+      "description": "Revocation from ESCALATED -> REVOKED",
+      "transitions": [
+        {
+          "state": "ESCALATED",
+          "trigger": "revoke",
+          "expected_next_state": "REVOKED",
+          "expected_error": null
+        }
+      ]
+    },
+    {
+      "name": "invalid_transition_request_to_denied",
+      "description": "Cannot transition directly from REQUESTED to DENIED",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "deny",
+          "expected_next_state": null,
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "invalid_transition_approved_to_pending",
+      "description": "Cannot transition from APPROVED to PENDING_REVIEW",
+      "transitions": [
+        {
+          "state": "APPROVED",
+          "trigger": "request",
+          "expected_next_state": null,
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "invalid_state_after_denied",
+      "description": "DENIED is terminal; no further transitions allowed",
+      "transitions": [
+        {
+          "state": "DENIED",
+          "trigger": "approve",
+          "expected_next_state": null,
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "invalid_state_after_revoked",
+      "description": "REVOKED is terminal; no further transitions allowed",
+      "transitions": [
+        {
+          "state": "REVOKED",
+          "trigger": "approve",
+          "expected_next_state": null,
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "unknown_trigger",
+      "description": "Unknown trigger results in invalid transition",
+      "transitions": [
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "invalid_action",
+          "expected_next_state": null,
+          "expected_error": "invalid_transition"
+        }
+      ]
+    }
+  ]
+}

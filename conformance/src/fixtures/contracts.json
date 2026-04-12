@@ -1,0 +1,239 @@
+{
+  "fixtures": [
+    {
+      "name": "valid_minimal_contract",
+      "description": "Minimal valid contract with all required fields",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [
+          {
+            "name": "deploy",
+            "policy": {
+              "type": "enumeration",
+              "values": ["staging", "prod"]
+            }
+          }
+        ],
+        "attestation": {
+          "level": "aware"
+        }
+      },
+      "expected_valid": true,
+      "expected_errors": []
+    },
+    {
+      "name": "valid_full_contract",
+      "description": "Complete contract with all optional fields",
+      "contract": {
+        "version": "1.0.0",
+        "id": "ct_12345678",
+        "authority": "urn:atp:auth:example-corp",
+        "description": "Production deployment contract",
+        "scope": {
+          "principal": "iam_user_*",
+          "resource": "service_prod_*"
+        },
+        "actions": [
+          {
+            "name": "deploy",
+            "policy": {
+              "type": "domain",
+              "pattern": "*.example.com"
+            },
+            "approval": {
+              "required": true,
+              "mode": "async",
+              "escalation_timeout_seconds": 3600
+            }
+          },
+          {
+            "name": "rollback",
+            "policy": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "attestation": {
+          "level": "verified",
+          "idempotency_model": "scoped",
+          "require_ack": true
+        },
+        "metadata": {
+          "team": "platform",
+          "criticality": "high"
+        }
+      },
+      "expected_valid": true,
+      "expected_errors": []
+    },
+    {
+      "name": "missing_version",
+      "description": "Contract missing required version field",
+      "contract": {
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [{ "name": "deploy" }],
+        "attestation": { "level": "aware" }
+      },
+      "expected_valid": false,
+      "expected_errors": [
+        {
+          "field": "version",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "missing_authority",
+      "description": "Contract missing required authority field",
+      "contract": {
+        "version": "1.0.0",
+        "actions": [{ "name": "deploy" }],
+        "attestation": { "level": "aware" }
+      },
+      "expected_valid": false,
+      "expected_errors": [
+        {
+          "field": "authority",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "missing_actions",
+      "description": "Contract missing required actions field",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "attestation": { "level": "aware" }
+      },
+      "expected_valid": false,
+      "expected_errors": [
+        {
+          "field": "actions",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "missing_attestation",
+      "description": "Contract missing required attestation field",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [{ "name": "deploy" }]
+      },
+      "expected_valid": false,
+      "expected_errors": [
+        {
+          "field": "attestation",
+          "code": "required"
+        }
+      ]
+    },
+    {
+      "name": "invalid_version_format",
+      "description": "Version is not valid semver",
+      "contract": {
+        "version": "not-a-version",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [{ "name": "deploy" }],
+        "attestation": { "level": "aware" }
+      },
+      "expected_valid": false,
+      "expected_errors": [
+        {
+          "field": "version",
+          "code": "invalid_format"
+        }
+      ]
+    },
+    {
+      "name": "invalid_authority_format",
+      "description": "Authority is not a valid URN",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "not-a-urn",
+        "actions": [{ "name": "deploy" }],
+        "attestation": { "level": "aware" }
+      },
+      "expected_valid": false,
+      "expected_errors": [
+        {
+          "field": "authority",
+          "code": "invalid_format"
+        }
+      ]
+    },
+    {
+      "name": "empty_actions_array",
+      "description": "Contract with empty actions array",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [],
+        "attestation": { "level": "aware" }
+      },
+      "expected_valid": false,
+      "expected_errors": [
+        {
+          "field": "actions",
+          "code": "min_items"
+        }
+      ]
+    },
+    {
+      "name": "invalid_attestation_level",
+      "description": "Attestation level is not recognized",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [{ "name": "deploy" }],
+        "attestation": { "level": "unknown_level" }
+      },
+      "expected_valid": false,
+      "expected_errors": [
+        {
+          "field": "attestation.level",
+          "code": "invalid_enum"
+        }
+      ]
+    },
+    {
+      "name": "unsafe_idempotency_without_ack",
+      "description": "Unsafe idempotency model requires ack flag",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [{ "name": "deploy" }],
+        "attestation": {
+          "level": "verified",
+          "idempotency_model": "unsafe"
+        }
+      },
+      "expected_valid": false,
+      "expected_errors": [
+        {
+          "field": "attestation.require_ack",
+          "code": "required_with_unsafe"
+        }
+      ]
+    },
+    {
+      "name": "safe_idempotency_with_ack",
+      "description": "Safe idempotency model allows ack flag",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "urn:atp:auth:example-corp",
+        "actions": [{ "name": "deploy" }],
+        "attestation": {
+          "level": "verified",
+          "idempotency_model": "scoped",
+          "require_ack": true
+        }
+      },
+      "expected_valid": true,
+      "expected_errors": []
+    }
+  ]
+}

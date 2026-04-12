@@ -90,30 +90,29 @@ atp-protocol/
 │   │   └── atp-contract.schema.json
 │   └── rfcs/                # RFC process for spec evolution
 │       └── 0000-template.md
-├── sdk/ts/                  # TypeScript SDK (@atp-protocol/sdk)
-│   └── src/                 # Contract validation, policy eval, approval FSM, governance wrapper
+├── sdk/
+│   ├── ts/                  # TypeScript SDK (@atp-protocol/sdk)
+│   └── python/              # Python SDK (atp-protocol on PyPI)
 ├── gateway/                 # Reference gateway (@atp-protocol/gateway)
 │   └── src/                 # Full governed execution pipeline with middleware
+├── conformance/             # Conformance test suite (@atp-protocol/conformance)
+│   └── src/                 # Fixtures, runner, self-tests
+├── docs/                    # Documentation site (Docusaurus)
 ├── examples/                # Getting started
 │   ├── contracts/           # Example ATP contracts
 │   └── quick-start.ts       # Full SDK usage example
-├── docs/                    # Documentation and guides
-│   └── POSITIONING.md       # Public strategy document
-├── .github/workflows/       # CI pipeline
+├── .github/workflows/       # CI + publish pipelines
 ├── LICENSE                  # Apache 2.0
 ├── CONTRIBUTING.md          # Contribution guidelines
 └── CODE_OF_CONDUCT.md       # Community standards
 ```
 
-**SDKs and gateway** will ship in dedicated repos:
-
-| Repo | Status | Description |
-|------|--------|-------------|
-| `atp-protocol` | **Active** | Spec, schemas, docs |
-| `sdk/ts` | **Active** | TypeScript SDK (`@atp-protocol/sdk`) — 81 tests |
-| `gateway` | **Active** | Reference gateway implementation — 20 tests |
-| `atp-sdk-python` | Planned | Python SDK (`atp-protocol` on PyPI) |
-| `atp-conformance` | Planned | Conformance test suite |
+| Package | Language | Install | Tests |
+|---------|----------|---------|-------|
+| `@atp-protocol/sdk` | TypeScript | `npm install @atp-protocol/sdk` | 81 |
+| `atp-protocol` | Python | `pip install atp-protocol` | 116 |
+| `@atp-protocol/gateway` | TypeScript | `npm install @atp-protocol/gateway` | 20 |
+| `@atp-protocol/conformance` | TypeScript | `npm install @atp-protocol/conformance` | 8 |
 
 ## Conformance levels
 
@@ -142,12 +141,15 @@ Open source gives ATP reach. DUAL gives ATP depth.
 - [x] Core contract schema
 - [x] Full protocol specification (14 sections, v1.0.0-draft.2)
 - [x] TypeScript SDK (4 modules, 81 tests)
+- [x] Python SDK (4 modules, 116 tests)
 - [x] Reference gateway (full pipeline, 20 tests)
-- [x] CI pipeline (GitHub Actions, Node 18/20/22)
-- [x] Example contracts and quick-start guide
-- [ ] Python SDK
-- [ ] Conformance test suite (standalone)
-- [ ] npm publish
+- [x] Conformance test suite (61 fixtures, 4 levels)
+- [x] Documentation site (Docusaurus, 20+ pages)
+- [x] CI pipeline (TS Node 18/20/22, Python 3.10/3.11/3.12)
+- [x] Publish workflow (npm + PyPI on release)
+- [ ] npm/PyPI initial publish
+- [ ] Design partner program
+- [ ] MCP plugin marketplace listing
 
 ## Contributing
 
