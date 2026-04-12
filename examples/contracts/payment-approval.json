@@ -1,0 +1,34 @@
+{
+  "version": "1.0.0",
+  "authority": "org.finance.approve-payment",
+  "actions": ["approve-payment", "schedule-payment"],
+  "scope": {
+    "max_amount": 50000,
+    "min_amount": 1,
+    "allowed_currencies": ["USD", "EUR", "GBP"],
+    "prohibited_content": ["cryptocurrency", "personal account"]
+  },
+  "approval": {
+    "required": true,
+    "required_above": 5000,
+    "approver_role": "finance_manager",
+    "timeout": "PT8H",
+    "escalation_path": "finance_director,cfo"
+  },
+  "credentials": {
+    "provider": "stripe-api",
+    "scope": ["charges:write"],
+    "inject_as": "bearer_token",
+    "fail_closed": true
+  },
+  "output": {
+    "object_type": "payment_record",
+    "initial_state": "scheduled",
+    "schema_ref": "schemas/payment-v1.json"
+  },
+  "attestation": "full",
+  "revocable": true,
+  "expiry": "2027-01-01T00:00:00Z",
+  "idempotency": "gateway-enforced",
+  "execution_timeout": "PT60S"
+}

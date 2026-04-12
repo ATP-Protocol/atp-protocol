@@ -1,0 +1,21 @@
+{
+  "version": "1.0.0",
+  "authority": "org.analytics.read-data",
+  "actions": ["query-database", "export-report"],
+  "scope": {
+    "allowed_tables": ["sales_summary", "product_catalog", "public_metrics"],
+    "max_payload_bytes": 10485760
+  },
+  "approval": {
+    "required": false
+  },
+  "credentials": {
+    "provider": "internal-db",
+    "scope": ["read"],
+    "inject_as": "api_key",
+    "fail_closed": true
+  },
+  "attestation": "light",
+  "revocable": true,
+  "idempotency": "tool-native"
+}

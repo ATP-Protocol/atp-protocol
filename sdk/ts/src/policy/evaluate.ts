@@ -72,6 +72,28 @@ export function evaluatePolicy(
     policiesEvaluated++;
     const requestValue = requestParams[field];
 
+    // Deny list (field name contains "prohibited") — must check before enumeration
+    if (field.includes("prohibited") && Array.isArray(constraint)) {
+      constraints.push({ source: "contract", field, value: constraint });
+
+      if (requestValue !== undefined && typeof requestValue === "string") {
+        const lower = requestValue.toLowerCase();
+        for (const denied of constraint) {
+          if (typeof denied === "string" && lower.includes(denied.toLowerCase())) {
+            return {
+              permitted: false,
+              policies_evaluated: policiesEvaluated,
+              constraints_applied: constraints,
+              evaluated_at: now,
+              denial_reason: `Content contains prohibited term: "${denied}"`,
+              denial_source: "contract",
+            };
+          }
+        }
+      }
+      continue;
+    }
+
     // Enumeration constraint (array of permitted values)
     if (Array.isArray(constraint)) {
       constraints.push({ source: "contract", field, value: constraint });
@@ -143,28 +165,6 @@ export function evaluatePolicy(
           denial_reason: `"${field}" is not allowed by policy`,
           denial_source: "contract",
         };
-      }
-      continue;
-    }
-
-    // Deny list (field name contains "prohibited")
-    if (field.includes("prohibited") && Array.isArray(constraint)) {
-      constraints.push({ source: "contract", field, value: constraint });
-
-      if (requestValue !== undefined && typeof requestValue === "string") {
-        const lower = requestValue.toLowerCase();
-        for (const denied of constraint) {
-          if (typeof denied === "string" && lower.includes(denied.toLowerCase())) {
-            return {
-              permitted: false,
-              policies_evaluated: policiesEvaluated,
-              constraints_applied: constraints,
-              evaluated_at: now,
-              denial_reason: `Content contains prohibited term: "${denied}"`,
-              denial_source: "contract",
-            };
-          }
-        }
       }
       continue;
     }
