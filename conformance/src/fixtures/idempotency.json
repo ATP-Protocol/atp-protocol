@@ -1,119 +1,195 @@
 {
+  "suite_version": "1.0.0",
+  "description": "Idempotency key computation fixtures (Level 3 - Verified). Tests determinism and parameter independence.",
+  "total_fixtures": 22,
   "fixtures": [
     {
-      "name": "idempotency_deterministic_same_input",
+      "name": "idem_deterministic_same_input",
       "description": "Same input produces same idempotency key",
-      "contract_id": "ct_idem_001",
-      "action": "deploy",
-      "params1": {
-        "target": "prod",
-        "version": "1.2.3"
-      },
-      "params2": {
-        "target": "prod",
-        "version": "1.2.3"
-      },
+      "contract_id": "ctr_001",
+      "action": "send-email",
+      "params1": { "recipient": "user@example.com", "subject": "Hello" },
+      "params2": { "recipient": "user@example.com", "subject": "Hello" },
       "same_key": true
     },
     {
-      "name": "idempotency_different_target",
-      "description": "Different target produces different key",
-      "contract_id": "ct_idem_002",
-      "action": "deploy",
-      "params1": {
-        "target": "staging",
-        "version": "1.0.0"
-      },
-      "params2": {
-        "target": "prod",
-        "version": "1.0.0"
-      },
-      "same_key": false
-    },
-    {
-      "name": "idempotency_different_version",
-      "description": "Different version produces different key",
-      "contract_id": "ct_idem_003",
-      "action": "deploy",
-      "params1": {
-        "target": "prod",
-        "version": "1.0.0"
-      },
-      "params2": {
-        "target": "prod",
-        "version": "1.0.1"
-      },
-      "same_key": false
-    },
-    {
-      "name": "idempotency_different_action",
-      "description": "Different action produces different key",
-      "contract_id": "ct_idem_004",
-      "action": "deploy",
-      "params1": {
-        "target": "prod"
-      },
-      "params2": null,
-      "same_key": false
-    },
-    {
-      "name": "idempotency_different_contract",
+      "name": "idem_different_contract_id",
       "description": "Different contract_id produces different key",
-      "contract_id": "ct_idem_005",
-      "action": "deploy",
-      "params1": {
-        "target": "prod"
-      },
-      "params2": null,
+      "contract_id": "ctr_001",
+      "action": "send-email",
+      "params1": { "recipient": "user@example.com" },
+      "params2": { "recipient": "user@example.com" },
       "same_key": false
     },
     {
-      "name": "idempotency_empty_params",
-      "description": "Idempotency key can be computed with empty params",
-      "contract_id": "ct_idem_006",
-      "action": "read_config",
+      "name": "idem_different_action",
+      "description": "Different action produces different key",
+      "contract_id": "ctr_001",
+      "action": "send-email",
+      "params1": { "recipient": "user@example.com" },
+      "params2": { "recipient": "user@example.com" },
+      "same_key": false
+    },
+    {
+      "name": "idem_different_params",
+      "description": "Different parameters produce different key",
+      "contract_id": "ctr_001",
+      "action": "send-email",
+      "params1": { "recipient": "user1@example.com" },
+      "params2": { "recipient": "user2@example.com" },
+      "same_key": false
+    },
+    {
+      "name": "idem_param_order_independence",
+      "description": "Parameter order does not affect idempotency key (canonical JSON)",
+      "contract_id": "ctr_001",
+      "action": "send-email",
+      "params1": { "recipient": "user@example.com", "subject": "Hello", "body": "World" },
+      "params2": { "body": "World", "recipient": "user@example.com", "subject": "Hello" },
+      "same_key": true
+    },
+    {
+      "name": "idem_empty_params",
+      "description": "Empty parameters are handled consistently",
+      "contract_id": "ctr_001",
+      "action": "send-email",
       "params1": {},
       "params2": {},
       "same_key": true
     },
     {
-      "name": "idempotency_complex_params",
-      "description": "Complex nested params are deterministically hashed",
-      "contract_id": "ct_idem_007",
-      "action": "configure",
-      "params1": {
-        "settings": {
-          "enabled": true,
-          "timeout": 5000,
-          "retries": 3
-        },
-        "tags": ["prod", "critical"]
-      },
-      "params2": {
-        "settings": {
-          "enabled": true,
-          "timeout": 5000,
-          "retries": 3
-        },
-        "tags": ["prod", "critical"]
-      },
+      "name": "idem_nested_params",
+      "description": "Nested parameters are included in key computation",
+      "contract_id": "ctr_001",
+      "action": "transfer",
+      "params1": { "recipient": { "email": "user@example.com", "verified": true }, "amount": 1000 },
+      "params2": { "recipient": { "email": "user@example.com", "verified": true }, "amount": 1000 },
       "same_key": true
     },
     {
-      "name": "idempotency_param_order_irrelevant",
-      "description": "Parameter order does not affect key (JSON canonical form)",
-      "contract_id": "ct_idem_008",
-      "action": "update",
-      "params1": {
-        "a": 1,
-        "b": 2,
-        "c": 3
-      },
-      "params2": {
-        "c": 3,
-        "a": 1,
-        "b": 2
-      },
+      "name": "idem_nested_params_different",
+      "description": "Nested parameter changes produce different key",
+      "contract_id": "ctr_001",
+      "action": "transfer",
+      "params1": { "recipient": { "email": "user@example.com", "verified": true } },
+      "params2": { "recipient": { "email": "user@example.com", "verified": false } },
+      "same_key": false
+    },
+    {
+      "name": "idem_array_params",
+      "description": "Array parameters are handled consistently",
+      "contract_id": "ctr_001",
+      "action": "send-bulk-email",
+      "params1": { "recipients": ["user1@example.com", "user2@example.com"] },
+      "params2": { "recipients": ["user1@example.com", "user2@example.com"] },
+      "same_key": true
+    },
+    {
+      "name": "idem_array_params_order_matters",
+      "description": "Array element order matters for idempotency key",
+      "contract_id": "ctr_001",
+      "action": "send-bulk-email",
+      "params1": { "recipients": ["user1@example.com", "user2@example.com"] },
+      "params2": { "recipients": ["user2@example.com", "user1@example.com"] },
+      "same_key": false
+    },
+    {
+      "name": "idem_null_values",
+      "description": "Null values are handled consistently",
+      "contract_id": "ctr_001",
+      "action": "send-email",
+      "params1": { "recipient": "user@example.com", "cc": null },
+      "params2": { "recipient": "user@example.com", "cc": null },
+      "same_key": true
+    },
+    {
+      "name": "idem_boolean_true",
+      "description": "Boolean true is handled consistently",
+      "contract_id": "ctr_001",
+      "action": "approve-payment",
+      "params1": { "amount": 5000, "requires_approval": true },
+      "params2": { "amount": 5000, "requires_approval": true },
+      "same_key": true
+    },
+    {
+      "name": "idem_boolean_false",
+      "description": "Boolean false is handled consistently",
+      "contract_id": "ctr_001",
+      "action": "approve-payment",
+      "params1": { "amount": 5000, "requires_approval": false },
+      "params2": { "amount": 5000, "requires_approval": false },
+      "same_key": true
+    },
+    {
+      "name": "idem_boolean_different",
+      "description": "Different boolean values produce different keys",
+      "contract_id": "ctr_001",
+      "action": "approve-payment",
+      "params1": { "amount": 5000, "requires_approval": true },
+      "params2": { "amount": 5000, "requires_approval": false },
+      "same_key": false
+    },
+    {
+      "name": "idem_number_integer",
+      "description": "Integer number parameters are handled consistently",
+      "contract_id": "ctr_001",
+      "action": "transfer",
+      "params1": { "amount": 5000 },
+      "params2": { "amount": 5000 },
+      "same_key": true
+    },
+    {
+      "name": "idem_number_float",
+      "description": "Float number parameters are handled consistently",
+      "contract_id": "ctr_001",
+      "action": "transfer",
+      "params1": { "amount": 50.50 },
+      "params2": { "amount": 50.50 },
+      "same_key": true
+    },
+    {
+      "name": "idem_number_precision",
+      "description": "Number precision differences produce different keys",
+      "contract_id": "ctr_001",
+      "action": "transfer",
+      "params1": { "amount": 50.50 },
+      "params2": { "amount": 50.51 },
+      "same_key": false
+    },
+    {
+      "name": "idem_string_case_sensitive",
+      "description": "String parameters are case-sensitive",
+      "contract_id": "ctr_001",
+      "action": "send-email",
+      "params1": { "recipient": "user@example.com" },
+      "params2": { "recipient": "USER@example.com" },
+      "same_key": false
+    },
+    {
+      "name": "idem_string_whitespace",
+      "description": "Whitespace in strings matters for idempotency",
+      "contract_id": "ctr_001",
+      "action": "send-email",
+      "params1": { "subject": "Hello World" },
+      "params2": { "subject": "Hello  World" },
+      "same_key": false
+    },
+    {
+      "name": "idem_large_params",
+      "description": "Large parameter sets are handled consistently",
+      "contract_id": "ctr_001",
+      "action": "bulk-action",
+      "params1": { "items": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "metadata": { "nested": { "deeply": { "key": "value" } } } },
+      "params2": { "items": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], "metadata": { "nested": { "deeply": { "key": "value" } } } },
+      "same_key": true
+    },
+    {
+      "name": "idem_unicode_params",
+      "description": "Unicode characters in parameters are handled consistently",
+      "contract_id": "ctr_001",
+      "action": "send-email",
+      "params1": { "subject": "Hello 世界 🌍" },
+      "params2": { "subject": "Hello 世界 🌍" },
       "same_key": true
     }
   ]

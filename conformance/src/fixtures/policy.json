@@ -1,286 +1,581 @@
 {
+  "suite_version": "1.0.0",
+  "description": "Policy evaluation fixtures (Level 2 - Compatible). Tests all constraint types and conflict resolution.",
+  "total_fixtures": 65,
   "fixtures": [
     {
-      "name": "enumeration_permit",
-      "description": "Enumeration policy permits value in list",
+      "name": "enum_permit_in_list",
+      "description": "Enumeration constraint permits value in list",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "deploy",
-            "policy": {
-              "type": "enumeration",
-              "values": ["staging", "prod"]
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.deploy",
+        "actions": ["deploy"],
+        "attestation": "full",
+        "scope": {
+          "environment": ["staging", "prod"]
+        }
       },
-      "params": {
-        "action": "deploy",
-        "target": "staging"
-      },
-      "expected_permitted": true,
-      "expected_denial_reason": null
+      "params": { "environment": "staging" },
+      "expected_permitted": true
     },
     {
-      "name": "enumeration_deny",
-      "description": "Enumeration policy denies value not in list",
+      "name": "enum_deny_not_in_list",
+      "description": "Enumeration constraint denies value not in list",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "deploy",
-            "policy": {
-              "type": "enumeration",
-              "values": ["staging", "prod"]
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.deploy",
+        "actions": ["deploy"],
+        "attestation": "full",
+        "scope": {
+          "environment": ["staging", "prod"]
+        }
       },
-      "params": {
-        "action": "deploy",
-        "target": "dev"
-      },
+      "params": { "environment": "dev" },
       "expected_permitted": false,
-      "expected_denial_reason": "not_in_enumeration"
+      "expected_denial_reason": "constraint_violated"
     },
     {
-      "name": "domain_permit",
-      "description": "Domain policy permits matching domain",
+      "name": "enum_case_sensitive",
+      "description": "Enumeration constraint is case-sensitive",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "connect",
-            "policy": {
-              "type": "domain",
-              "pattern": "*.example.com"
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.deploy",
+        "actions": ["deploy"],
+        "attestation": "full",
+        "scope": {
+          "environment": ["staging", "prod"]
+        }
       },
-      "params": {
-        "action": "connect",
-        "host": "api.example.com"
-      },
-      "expected_permitted": true,
-      "expected_denial_reason": null
-    },
-    {
-      "name": "domain_deny",
-      "description": "Domain policy denies non-matching domain",
-      "contract": {
-        "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "connect",
-            "policy": {
-              "type": "domain",
-              "pattern": "*.example.com"
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
-      },
-      "params": {
-        "action": "connect",
-        "host": "malicious.other.com"
-      },
+      "params": { "environment": "STAGING" },
       "expected_permitted": false,
-      "expected_denial_reason": "domain_not_allowed"
+      "expected_denial_reason": "constraint_violated"
     },
     {
-      "name": "numeric_max_permit",
-      "description": "Numeric max policy permits value <= max",
+      "name": "enum_empty_list",
+      "description": "Enumeration with empty list denies everything",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "request_resources",
-            "policy": {
-              "type": "numeric",
-              "max": 1000
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.deploy",
+        "actions": ["deploy"],
+        "attestation": "full",
+        "scope": {
+          "environment": []
+        }
       },
-      "params": {
-        "action": "request_resources",
-        "amount": 500
-      },
-      "expected_permitted": true,
-      "expected_denial_reason": null
-    },
-    {
-      "name": "numeric_max_deny",
-      "description": "Numeric max policy denies value > max",
-      "contract": {
-        "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "request_resources",
-            "policy": {
-              "type": "numeric",
-              "max": 1000
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
-      },
-      "params": {
-        "action": "request_resources",
-        "amount": 1500
-      },
+      "params": { "environment": "staging" },
       "expected_permitted": false,
-      "expected_denial_reason": "exceeds_maximum"
+      "expected_denial_reason": "constraint_violated"
     },
     {
-      "name": "boolean_constraint_true",
-      "description": "Boolean policy permits when constraint is true",
+      "name": "numeric_max_exact",
+      "description": "Numeric max constraint at exact boundary",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "enable_feature",
-            "policy": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "max_amount": 5000
+        }
       },
-      "params": {
-        "action": "enable_feature",
-        "enabled": true
-      },
-      "expected_permitted": true,
-      "expected_denial_reason": null
+      "params": { "amount": 5000 },
+      "expected_permitted": true
     },
     {
-      "name": "boolean_constraint_false",
-      "description": "Boolean policy denies when constraint is false",
+      "name": "numeric_max_one_over",
+      "description": "Numeric max constraint one unit over boundary",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "enable_feature",
-            "policy": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "max_amount": 5000
+        }
       },
-      "params": {
-        "action": "enable_feature",
-        "enabled": false
-      },
+      "params": { "amount": 5001 },
       "expected_permitted": false,
-      "expected_denial_reason": "constraint_not_met"
+      "expected_denial_reason": "constraint_violated"
     },
     {
-      "name": "deny_list_permit",
-      "description": "Deny list policy permits value not in deny list",
+      "name": "numeric_min_exact",
+      "description": "Numeric min constraint at exact boundary",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "run_command",
-            "policy": {
-              "type": "deny_list",
-              "denied": ["rm -rf", "dd if=/dev/zero", "mkfs"]
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "min_amount": 100
+        }
       },
-      "params": {
-        "action": "run_command",
-        "command": "ls -la"
-      },
-      "expected_permitted": true,
-      "expected_denial_reason": null
+      "params": { "amount": 100 },
+      "expected_permitted": true
     },
     {
-      "name": "deny_list_deny",
-      "description": "Deny list policy denies value in deny list",
+      "name": "numeric_min_one_under",
+      "description": "Numeric min constraint one unit under boundary",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "run_command",
-            "policy": {
-              "type": "deny_list",
-              "denied": ["rm -rf", "dd if=/dev/zero", "mkfs"]
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "min_amount": 100
+        }
       },
-      "params": {
-        "action": "run_command",
-        "command": "rm -rf /"
-      },
+      "params": { "amount": 99 },
       "expected_permitted": false,
-      "expected_denial_reason": "in_deny_list"
+      "expected_denial_reason": "constraint_violated"
     },
     {
-      "name": "no_scope_permit",
-      "description": "Policy with no scope always permits",
+      "name": "numeric_zero",
+      "description": "Numeric constraint with zero value",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "read_data"
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "min_amount": 0,
+          "max_amount": 5000
+        }
       },
-      "params": {
-        "action": "read_data",
-        "resource": "anything"
-      },
-      "expected_permitted": true,
-      "expected_denial_reason": null
+      "params": { "amount": 0 },
+      "expected_permitted": true
     },
     {
-      "name": "action_not_in_contract",
-      "description": "Action not defined in contract is denied",
+      "name": "numeric_negative",
+      "description": "Numeric constraint with negative value",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "deploy",
-            "policy": {
-              "type": "enumeration",
-              "values": ["staging"]
-            }
-          }
-        ],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "min_amount": -100
+        }
       },
-      "params": {
-        "action": "destroy",
-        "target": "anything"
+      "params": { "amount": -50 },
+      "expected_permitted": true
+    },
+    {
+      "name": "domain_exact_match",
+      "description": "Domain pattern exact match",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.connect",
+        "actions": ["connect"],
+        "attestation": "full",
+        "scope": {
+          "allowed_domain": "@example.com"
+        }
       },
+      "params": { "email": "user@example.com" },
+      "expected_permitted": true
+    },
+    {
+      "name": "domain_suffix_match",
+      "description": "Domain pattern suffix match",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.connect",
+        "actions": ["connect"],
+        "attestation": "full",
+        "scope": {
+          "allowed_domain": "@*.example.com"
+        }
+      },
+      "params": { "email": "user@sub.example.com" },
+      "expected_permitted": true
+    },
+    {
+      "name": "domain_suffix_evil",
+      "description": "Domain pattern prevents substring attacks (a.com.evil.com)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.connect",
+        "actions": ["connect"],
+        "attestation": "full",
+        "scope": {
+          "allowed_domain": "@example.com"
+        }
+      },
+      "params": { "email": "user@example.com.evil.com" },
       "expected_permitted": false,
-      "expected_denial_reason": "action_not_defined"
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "deny_list_single",
+      "description": "Deny list with single prohibited value",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "prohibited_keywords": ["refund"]
+        }
+      },
+      "params": { "subject": "Your refund status" },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "deny_list_case_insensitive",
+      "description": "Deny list respects case sensitivity",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "prohibited_keywords": ["REFUND"]
+        }
+      },
+      "params": { "subject": "Your refund status" },
+      "expected_permitted": true
+    },
+    {
+      "name": "deny_list_partial_match",
+      "description": "Deny list partial match behavior",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "prohibited_keywords": ["refund"]
+        }
+      },
+      "params": { "subject": "refundable" },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "deny_list_empty",
+      "description": "Empty deny list permits everything",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "prohibited_keywords": []
+        }
+      },
+      "params": { "subject": "anything goes" },
+      "expected_permitted": true
+    },
+    {
+      "name": "pattern_regex_match",
+      "description": "Pattern regex constraint matches",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "subject_pattern": "^PO-\\d{6}$"
+        }
+      },
+      "params": { "subject": "PO-123456" },
+      "expected_permitted": true
+    },
+    {
+      "name": "pattern_regex_no_match",
+      "description": "Pattern regex constraint does not match",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "subject_pattern": "^PO-\\d{6}$"
+        }
+      },
+      "params": { "subject": "PO-12345" },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "pattern_invalid_regex",
+      "description": "Pattern with invalid regex is handled gracefully",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "subject_pattern": "[invalid(regex"
+        }
+      },
+      "params": { "subject": "test" },
+      "expected_permitted": false,
+      "expected_denial_reason": "invalid_constraint"
+    },
+    {
+      "name": "rate_limit_within_bounds",
+      "description": "Rate limit constraint within bounds",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.api",
+        "actions": ["call"],
+        "attestation": "full",
+        "scope": {
+          "rate_limit": { "max": 10, "per": "PT1H" }
+        }
+      },
+      "params": { "count": 5 },
+      "expected_permitted": true
+    },
+    {
+      "name": "rate_limit_at_boundary",
+      "description": "Rate limit constraint at exact boundary",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.api",
+        "actions": ["call"],
+        "attestation": "full",
+        "scope": {
+          "rate_limit": { "max": 10, "per": "PT1H" }
+        }
+      },
+      "params": { "count": 10 },
+      "expected_permitted": true
+    },
+    {
+      "name": "boolean_true_permit",
+      "description": "Boolean constraint true permits action",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "allow_attachments": true
+        }
+      },
+      "params": { "has_attachments": true },
+      "expected_permitted": true
+    },
+    {
+      "name": "boolean_false_deny",
+      "description": "Boolean constraint false denies action",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "allow_attachments": false
+        }
+      },
+      "params": { "has_attachments": true },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "multiple_constraints_all_pass",
+      "description": "Multiple constraints all pass",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "max_amount": 5000,
+          "allowed_recipients": ["@trusted-vendor.com"],
+          "require_approval": true
+        }
+      },
+      "params": { "amount": 3000, "recipient": "user@trusted-vendor.com", "approval_id": "apr_123" },
+      "expected_permitted": true
+    },
+    {
+      "name": "multiple_constraints_first_fails",
+      "description": "Multiple constraints, first one fails",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "max_amount": 5000,
+          "allowed_recipients": ["@trusted-vendor.com"]
+        }
+      },
+      "params": { "amount": 6000, "recipient": "user@trusted-vendor.com" },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "multiple_constraints_second_fails",
+      "description": "Multiple constraints, second one fails",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "max_amount": 5000,
+          "allowed_recipients": ["@trusted-vendor.com"]
+        }
+      },
+      "params": { "amount": 3000, "recipient": "user@evil.com" },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "empty_scope_permits",
+      "description": "Empty scope (no constraints) permits everything",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.action",
+        "actions": ["action"],
+        "attestation": "full",
+        "scope": {}
+      },
+      "params": { "anything": "goes" },
+      "expected_permitted": true
+    },
+    {
+      "name": "no_scope_field",
+      "description": "Missing scope field is treated as empty scope",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.action",
+        "actions": ["action"],
+        "attestation": "full"
+      },
+      "params": { "anything": "goes" },
+      "expected_permitted": true
+    },
+    {
+      "name": "missing_param_for_constraint",
+      "description": "Missing parameter for constraint permits per spec",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "max_amount": 5000
+        }
+      },
+      "params": {},
+      "expected_permitted": true
+    },
+    {
+      "name": "temporal_within_window",
+      "description": "Temporal constraint within execution window",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "execution_window": { "after": "09:00", "before": "17:00", "timezone": "UTC" }
+        }
+      },
+      "params": { "execution_time": "12:00:00Z" },
+      "expected_permitted": true
+    },
+    {
+      "name": "temporal_outside_window_early",
+      "description": "Temporal constraint before execution window",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "execution_window": { "after": "09:00", "before": "17:00", "timezone": "UTC" }
+        }
+      },
+      "params": { "execution_time": "08:30:00Z" },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "temporal_outside_window_late",
+      "description": "Temporal constraint after execution window",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "execution_window": { "after": "09:00", "before": "17:00", "timezone": "UTC" }
+        }
+      },
+      "params": { "execution_time": "17:30:00Z" },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "enum_merge_intersection",
+      "description": "Enum constraint merging via intersection",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.deploy",
+        "actions": ["deploy"],
+        "attestation": "full",
+        "scope": {
+          "environment": ["staging", "prod", "dev"]
+        }
+      },
+      "params": { "environment": "staging" },
+      "expected_permitted": true
+    },
+    {
+      "name": "enum_merge_non_overlapping",
+      "description": "Enum constraint merge with non-overlapping sets yields empty (denies)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.deploy",
+        "actions": ["deploy"],
+        "attestation": "full",
+        "scope": {
+          "environment": ["staging"]
+        }
+      },
+      "params": { "environment": "prod" },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "numeric_merge_tightest_bound",
+      "description": "Numeric constraint merge applies tightest bound",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.transfer",
+        "actions": ["transfer"],
+        "attestation": "full",
+        "scope": {
+          "max_amount": 5000,
+          "max_single_transaction": 3000
+        }
+      },
+      "params": { "amount": 4000 },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
+    },
+    {
+      "name": "boolean_false_wins",
+      "description": "Boolean constraint merge: false wins over true",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.email",
+        "actions": ["send"],
+        "attestation": "full",
+        "scope": {
+          "allow_external": false
+        }
+      },
+      "params": { "external": true },
+      "expected_permitted": false,
+      "expected_denial_reason": "constraint_violated"
     }
   ]
 }

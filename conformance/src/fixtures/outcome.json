@@ -1,145 +1,139 @@
 {
+  "suite_version": "1.0.0",
+  "description": "Outcome classification fixtures (Level 3 - Verified). Tests HTTP status codes and response patterns.",
+  "total_fixtures": 22,
   "fixtures": [
     {
-      "name": "outcome_200_success",
+      "name": "outcome_http_200_success",
       "description": "HTTP 200 response is classified as success",
-      "response": {
-        "status": 200,
-        "body": {
-          "result": "ok"
-        }
-      },
+      "response": { "status": 200, "body": { "result": "ok" } },
       "expected_outcome": "success"
     },
     {
-      "name": "outcome_201_success",
-      "description": "HTTP 201 response is classified as success",
-      "response": {
-        "status": 201,
-        "body": {
-          "id": "resource_123"
-        }
-      },
+      "name": "outcome_http_201_success",
+      "description": "HTTP 201 Created is classified as success",
+      "response": { "status": 201, "body": { "id": "resource_123" } },
       "expected_outcome": "success"
     },
     {
-      "name": "outcome_202_unknown",
-      "description": "HTTP 202 Accepted is classified as unknown",
-      "response": {
-        "status": 202,
-        "body": {
-          "status": "pending"
-        }
-      },
+      "name": "outcome_http_202_accepted_unknown",
+      "description": "HTTP 202 Accepted with no final status is classified as unknown",
+      "response": { "status": 202, "body": { "status": "processing" } },
       "expected_outcome": "unknown"
     },
     {
-      "name": "outcome_400_failure",
+      "name": "outcome_http_204_success",
+      "description": "HTTP 204 No Content is classified as success",
+      "response": { "status": 204 },
+      "expected_outcome": "success"
+    },
+    {
+      "name": "outcome_http_400_failure",
       "description": "HTTP 400 Bad Request is classified as failure",
-      "response": {
-        "status": 400,
-        "body": {
-          "error": "invalid_input"
-        }
-      },
+      "response": { "status": 400, "body": { "error": "invalid_params" } },
       "expected_outcome": "failure"
     },
     {
-      "name": "outcome_401_failure",
+      "name": "outcome_http_401_failure",
       "description": "HTTP 401 Unauthorized is classified as failure",
-      "response": {
-        "status": 401,
-        "body": {
-          "error": "unauthorized"
-        }
-      },
+      "response": { "status": 401, "body": { "error": "authentication_failed" } },
       "expected_outcome": "failure"
     },
     {
-      "name": "outcome_403_failure",
+      "name": "outcome_http_403_failure",
       "description": "HTTP 403 Forbidden is classified as failure",
-      "response": {
-        "status": 403,
-        "body": {
-          "error": "forbidden"
-        }
-      },
+      "response": { "status": 403, "body": { "error": "permission_denied" } },
       "expected_outcome": "failure"
     },
     {
-      "name": "outcome_404_failure",
+      "name": "outcome_http_404_failure",
       "description": "HTTP 404 Not Found is classified as failure",
-      "response": {
-        "status": 404,
-        "body": {
-          "error": "not_found"
-        }
-      },
+      "response": { "status": 404, "body": { "error": "not_found" } },
       "expected_outcome": "failure"
     },
     {
-      "name": "outcome_409_failure",
+      "name": "outcome_http_409_failure",
       "description": "HTTP 409 Conflict is classified as failure",
-      "response": {
-        "status": 409,
-        "body": {
-          "error": "conflict"
-        }
-      },
+      "response": { "status": 409, "body": { "error": "resource_conflict" } },
       "expected_outcome": "failure"
     },
     {
-      "name": "outcome_500_failure",
+      "name": "outcome_http_429_failure",
+      "description": "HTTP 429 Too Many Requests is classified as failure",
+      "response": { "status": 429, "body": { "error": "rate_limit_exceeded" } },
+      "expected_outcome": "failure"
+    },
+    {
+      "name": "outcome_http_500_failure",
       "description": "HTTP 500 Internal Server Error is classified as failure",
-      "response": {
-        "status": 500,
-        "body": {
-          "error": "internal_error"
-        }
-      },
+      "response": { "status": 500, "body": { "error": "internal_error" } },
       "expected_outcome": "failure"
     },
     {
-      "name": "outcome_502_failure",
+      "name": "outcome_http_502_failure",
       "description": "HTTP 502 Bad Gateway is classified as failure",
-      "response": {
-        "status": 502,
-        "body": {
-          "error": "bad_gateway"
-        }
-      },
+      "response": { "status": 502, "body": { "error": "bad_gateway" } },
       "expected_outcome": "failure"
     },
     {
-      "name": "outcome_503_failure",
+      "name": "outcome_http_503_failure",
       "description": "HTTP 503 Service Unavailable is classified as failure",
-      "response": {
-        "status": 503,
-        "body": {
-          "error": "service_unavailable"
-        }
-      },
+      "response": { "status": 503, "body": { "error": "service_unavailable" } },
       "expected_outcome": "failure"
     },
     {
-      "name": "outcome_timeout",
-      "description": "Timeout response is classified as timeout",
-      "response": {
-        "status": 0,
-        "body": {
-          "error": "timeout",
-          "duration_ms": 30000
-        }
-      },
+      "name": "outcome_http_504_failure",
+      "description": "HTTP 504 Gateway Timeout is classified as failure",
+      "response": { "status": 504, "body": { "error": "gateway_timeout" } },
+      "expected_outcome": "failure"
+    },
+    {
+      "name": "outcome_timeout_no_response",
+      "description": "Connection timeout (no response) is classified as timeout",
+      "response": { "status": null, "body": null, "timeout": true },
       "expected_outcome": "timeout"
     },
     {
-      "name": "outcome_no_body",
-      "description": "Success with no response body",
-      "response": {
-        "status": 200
-      },
+      "name": "outcome_connection_reset",
+      "description": "Connection reset after request sent is classified as unknown",
+      "response": { "status": null, "body": null, "connection_reset": true },
+      "expected_outcome": "unknown"
+    },
+    {
+      "name": "outcome_null_response",
+      "description": "Null/undefined response is classified as unknown",
+      "response": { "status": null, "body": null },
+      "expected_outcome": "unknown"
+    },
+    {
+      "name": "outcome_200_with_error_body_success_wins",
+      "description": "HTTP 200 with error body in response: HTTP status wins (success)",
+      "response": { "status": 200, "body": { "error": "something_failed" } },
       "expected_outcome": "success"
+    },
+    {
+      "name": "outcome_partial_success_indicator",
+      "description": "Response with partial success indicator is classified as partial",
+      "response": { "status": 200, "body": { "results": [{ "success": true }, { "success": false }], "partial": true } },
+      "expected_outcome": "partial"
+    },
+    {
+      "name": "outcome_response_with_no_body",
+      "description": "Success response with no body is classified as success",
+      "response": { "status": 200 },
+      "expected_outcome": "success"
+    },
+    {
+      "name": "outcome_response_with_empty_object",
+      "description": "Success response with empty object body is classified as success",
+      "response": { "status": 200, "body": {} },
+      "expected_outcome": "success"
+    },
+    {
+      "name": "outcome_ambiguous_response",
+      "description": "Ambiguous response that cannot be confidently classified is unknown",
+      "response": { "status": 500, "body": { "status": "ok" }, "ambiguous": true },
+      "expected_outcome": "unknown"
     }
   ]
 }

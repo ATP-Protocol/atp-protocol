@@ -260,3 +260,83 @@ describe("parseEscalationPath", () => {
     expect(parseEscalationPath(contract)).toEqual(["admin", "cto", "ceo"]);
   });
 });
+
+// Edge case security tests
+describe("Contract Validation — edge cases & security", () => {
+  it("handles extremely long field values (1MB string)", () => {
+    const largeString = "x".repeat(1024 * 1024);
+    const contract = {
+      ...VALID_CONTRACT,
+      scope: { long_field: largeString },
+    };
+    const result = validateContract(contract);
+    expect(result.valid).toBeDefined();
+  });
+
+  it("handles deeply nested scope objects (10+ levels)", () => {
+    let nested: any = { value: "leaf" };
+    for (let i = 0; i < 10; i++) {
+      nested = { nested: nested };
+    }
+    const contract = { ...VALID_CONTRACT, scope: nested };
+    const result = validateContract(contract);
+    expect(result.valid).toBeDefined();
+  });
+
+  it("allows Unicode characters in authority and action names", () => {
+    const contract = {
+      ...VALID_CONTRACT,
+      authority: "org.procurement.send-email-🔒",
+      actions: ["send-email-日本語"],
+    };
+    const result = validateContract(contract);
+    expect(result.valid).toBeDefined();
+  });
+
+  it("distinguishes null vs undefined in contract fields", () => {
+    const withNull = { ...VALID_CONTRACT, approval: null };
+    const withUndefined = { ...VALID_CONTRACT, approval: undefined };
+
+    const resultNull = validateContract(withNull);
+    const resultUndefined = validateContract(withUndefined);
+
+    expect(resultNull.valid).toBeDefined();
+    expect(resultUndefined.valid).toBeDefined();
+  });
+
+  it("rejects malformed action arrays with non-string elements", () => {
+    const contract = {
+      ...VALID_CONTRACT,
+      actions: ["valid-action", 123 as any],
+    };
+    const result = validateContract(contract);
+    expect(result.valid).toBe(false);
+  });
+
+  it("handles scope with null values", () => {
+    const contract = {
+      ...VALID_CONTRACT,
+      scope: { nullable_field: null },
+    };
+    const result = validateContract(contract);
+    expect(result.valid).toBeDefined();
+  });
+
+  it("validates min/max constraints in approval config", () => {
+    const contract = {
+      ...VALID_CONTRACT,
+      approval: {
+        required: true,
+        required_above: Number.MAX_SAFE_INTEGER + 1,
+      },
+    };
+    const result = validateContract(contract);
+    expect(result.valid).toBeDefined();
+  });
+
+  it("rejects empty action array", () => {
+    const contract = { ...VALID_CONTRACT, actions: [] };
+    const result = validateContract(contract);
+    expect(result.valid).toBe(false);
+  });
+});

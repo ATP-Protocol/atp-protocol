@@ -195,3 +195,75 @@ describe("validTriggers", () => {
     expect(validTriggers("REVOKED")).toEqual([]);
   });
 });
+
+// Edge case security tests
+describe("ApprovalFlow — edge cases & security", () => {
+  const createFlow = () =>
+    new ApprovalFlow("ctr_test", "send-email", { recipient: "a@b.com" }, "0xWallet123");
+
+  it("rejects concurrent approval attempts (second approval after first)", () => {
+    const flow = createFlow();
+    flow.transition("deliver");
+    flow.transition("approve");
+    expect(() => flow.transition("approve")).toThrow();
+  });
+
+  it("rejects approval after revocation attempt sequence", () => {
+    const flow = createFlow();
+    flow.transition("deliver");
+    flow.transition("revoke");
+    expect(() => flow.transition("approve")).toThrow();
+    expect(flow.state).toBe("REVOKED");
+  });
+
+  it("enforces escalation depth exhaustion", () => {
+    const flow = createFlow();
+    // Escalate twice, then exhaust
+    flow.transition("deliver");
+    flow.transition("timeout");
+    flow.transition("escalate"); // depth = 1, state = ESCALATED
+    expect(flow.escalationDepth).toBe(1);
+    expect(flow.state).toBe("ESCALATED");
+
+    flow.transition("deliver"); // back to PENDING_REVIEW
+    flow.transition("timeout"); // back to EXPIRED
+    flow.transition("escalate"); // depth = 2, state = ESCALATED
+    expect(flow.escalationDepth).toBe(2);
+
+    flow.transition("deliver");
+    flow.transition("timeout");
+    flow.transition("exhaust_escalation"); // Deny
+    expect(flow.isDenied()).toBe(true);
+    expect(flow.state).toBe("DENIED_TIMEOUT");
+  });
+
+  it("preserves history accurately across all transitions", () => {
+    const flow = createFlow();
+    const initialHistoryLength = flow.history.length; // Initial submit
+    flow.transition("deliver");
+    flow.transition("approve");
+    expect(flow.history).toHaveLength(initialHistoryLength + 2);
+    expect(flow.history[flow.history.length - 1].trigger).toBe("approve");
+    expect(flow.history[flow.history.length - 1].to).toBe("APPROVED");
+  });
+
+  it("maintains escalation depth independent of history length", () => {
+    const flow = createFlow();
+    flow.transition("deliver");
+    flow.transition("timeout");
+    flow.transition("escalate");
+    const depthAfterEscalate = flow.escalationDepth;
+    expect(depthAfterEscalate).toBe(1);
+
+    flow.transition("deliver");
+    flow.transition("approve");
+    expect(flow.escalationDepth).toBe(1); // Should not increase
+  });
+
+  it("rejects transitions with invalid state in VALID_TRANSITIONS map", () => {
+    const flow = createFlow();
+    // Manually set to an impossible state to test robustness
+    (flow as any)._state = "IMPOSSIBLE_STATE";
+    expect(() => flow.transition("approve")).toThrow(ApprovalError);
+  });
+});

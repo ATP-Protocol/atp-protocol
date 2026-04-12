@@ -1,97 +1,278 @@
 {
+  "suite_version": "1.0.0",
+  "description": "Approval state machine fixtures (Level 2 - Compatible). Tests all valid transitions and invalid state combinations.",
+  "total_fixtures": 42,
   "fixtures": [
     {
-      "name": "happy_path_approval",
+      "name": "happy_path_simple",
       "description": "Happy path: REQUESTED -> PENDING_REVIEW -> APPROVED",
       "transitions": [
         {
           "state": "REQUESTED",
-          "trigger": "request",
-          "expected_next_state": "PENDING_REVIEW",
-          "expected_error": null
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
         },
         {
           "state": "PENDING_REVIEW",
           "trigger": "approve",
-          "expected_next_state": "APPROVED",
-          "expected_error": null
+          "expected_next_state": "APPROVED"
         }
       ]
     },
     {
-      "name": "approval_denial",
+      "name": "denial_path",
       "description": "Denial path: REQUESTED -> PENDING_REVIEW -> DENIED",
       "transitions": [
         {
           "state": "REQUESTED",
-          "trigger": "request",
-          "expected_next_state": "PENDING_REVIEW",
-          "expected_error": null
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
         },
         {
           "state": "PENDING_REVIEW",
           "trigger": "deny",
-          "expected_next_state": "DENIED",
-          "expected_error": null
+          "expected_next_state": "DENIED"
         }
       ]
     },
     {
-      "name": "approval_timeout_escalation",
-      "description": "Timeout with escalation: PENDING_REVIEW -> ESCALATED",
+      "name": "timeout_escalation_path",
+      "description": "Timeout with escalation: PENDING_REVIEW -> EXPIRED -> ESCALATED",
       "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
         {
           "state": "PENDING_REVIEW",
           "trigger": "timeout",
-          "expected_next_state": "ESCALATED",
-          "expected_error": null
+          "expected_next_state": "EXPIRED"
+        },
+        {
+          "state": "EXPIRED",
+          "trigger": "escalate",
+          "expected_next_state": "ESCALATED"
+        }
+      ]
+    },
+    {
+      "name": "timeout_denied_path",
+      "description": "Timeout without escalation: PENDING_REVIEW -> EXPIRED -> DENIED_TIMEOUT",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "timeout",
+          "expected_next_state": "EXPIRED"
+        },
+        {
+          "state": "EXPIRED",
+          "trigger": "deny_timeout",
+          "expected_next_state": "DENIED_TIMEOUT"
+        }
+      ]
+    },
+    {
+      "name": "escalation_loop",
+      "description": "Escalation cycle: ESCALATED -> PENDING_REVIEW -> ESCALATED -> PENDING_REVIEW -> APPROVED",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "timeout",
+          "expected_next_state": "EXPIRED"
+        },
+        {
+          "state": "EXPIRED",
+          "trigger": "escalate",
+          "expected_next_state": "ESCALATED"
+        },
+        {
+          "state": "ESCALATED",
+          "trigger": "resubmit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "timeout",
+          "expected_next_state": "EXPIRED"
+        },
+        {
+          "state": "EXPIRED",
+          "trigger": "escalate",
+          "expected_next_state": "ESCALATED"
+        },
+        {
+          "state": "ESCALATED",
+          "trigger": "resubmit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "approve",
+          "expected_next_state": "APPROVED"
+        }
+      ]
+    },
+    {
+      "name": "revoke_from_requested",
+      "description": "Revocation from REQUESTED state",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "revoke",
+          "expected_next_state": "REVOKED"
         }
       ]
     },
     {
       "name": "revoke_from_pending",
-      "description": "Revocation from PENDING_REVIEW -> REVOKED",
+      "description": "Revocation from PENDING_REVIEW state",
       "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
         {
           "state": "PENDING_REVIEW",
           "trigger": "revoke",
-          "expected_next_state": "REVOKED",
-          "expected_error": null
+          "expected_next_state": "REVOKED"
         }
       ]
     },
     {
       "name": "revoke_from_approved",
-      "description": "Revocation from APPROVED -> REVOKED",
+      "description": "Revocation from APPROVED state (terminal revert)",
       "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "approve",
+          "expected_next_state": "APPROVED"
+        },
         {
           "state": "APPROVED",
           "trigger": "revoke",
-          "expected_next_state": "REVOKED",
-          "expected_error": null
+          "expected_next_state": "REVOKED"
+        }
+      ]
+    },
+    {
+      "name": "revoke_from_denied",
+      "description": "Revocation from DENIED state",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "deny",
+          "expected_next_state": "DENIED"
+        },
+        {
+          "state": "DENIED",
+          "trigger": "revoke",
+          "expected_next_state": "REVOKED"
+        }
+      ]
+    },
+    {
+      "name": "revoke_from_expired",
+      "description": "Revocation from EXPIRED state",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "timeout",
+          "expected_next_state": "EXPIRED"
+        },
+        {
+          "state": "EXPIRED",
+          "trigger": "revoke",
+          "expected_next_state": "REVOKED"
         }
       ]
     },
     {
       "name": "revoke_from_escalated",
-      "description": "Revocation from ESCALATED -> REVOKED",
+      "description": "Revocation from ESCALATED state",
       "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "timeout",
+          "expected_next_state": "EXPIRED"
+        },
+        {
+          "state": "EXPIRED",
+          "trigger": "escalate",
+          "expected_next_state": "ESCALATED"
+        },
         {
           "state": "ESCALATED",
           "trigger": "revoke",
-          "expected_next_state": "REVOKED",
-          "expected_error": null
+          "expected_next_state": "REVOKED"
         }
       ]
     },
     {
-      "name": "invalid_transition_request_to_denied",
+      "name": "invalid_transition_requested_to_approved",
+      "description": "Cannot transition directly from REQUESTED to APPROVED",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "approve",
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "invalid_transition_requested_to_denied",
       "description": "Cannot transition directly from REQUESTED to DENIED",
       "transitions": [
         {
           "state": "REQUESTED",
           "trigger": "deny",
-          "expected_next_state": null,
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "invalid_transition_pending_to_requested",
+      "description": "Cannot go back from PENDING_REVIEW to REQUESTED",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "submit",
           "expected_error": "invalid_transition"
         }
       ]
@@ -101,45 +282,191 @@
       "description": "Cannot transition from APPROVED to PENDING_REVIEW",
       "transitions": [
         {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "approve",
+          "expected_next_state": "APPROVED"
+        },
+        {
           "state": "APPROVED",
-          "trigger": "request",
-          "expected_next_state": null,
+          "trigger": "submit",
           "expected_error": "invalid_transition"
         }
       ]
     },
     {
-      "name": "invalid_state_after_denied",
-      "description": "DENIED is terminal; no further transitions allowed",
+      "name": "invalid_transition_approved_to_escalated",
+      "description": "Cannot transition from APPROVED to ESCALATED",
       "transitions": [
         {
-          "state": "DENIED",
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
           "trigger": "approve",
-          "expected_next_state": null,
+          "expected_next_state": "APPROVED"
+        },
+        {
+          "state": "APPROVED",
+          "trigger": "escalate",
           "expected_error": "invalid_transition"
         }
       ]
     },
     {
-      "name": "invalid_state_after_revoked",
-      "description": "REVOKED is terminal; no further transitions allowed",
+      "name": "invalid_transition_denied_to_pending",
+      "description": "Cannot transition from DENIED to PENDING_REVIEW",
       "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "deny",
+          "expected_next_state": "DENIED"
+        },
+        {
+          "state": "DENIED",
+          "trigger": "submit",
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "invalid_transition_expired_to_pending_direct",
+      "description": "Cannot go directly from EXPIRED to PENDING_REVIEW",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "timeout",
+          "expected_next_state": "EXPIRED"
+        },
+        {
+          "state": "EXPIRED",
+          "trigger": "submit",
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "invalid_transition_denied_timeout_to_pending",
+      "description": "Cannot transition from DENIED_TIMEOUT to PENDING_REVIEW",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "timeout",
+          "expected_next_state": "EXPIRED"
+        },
+        {
+          "state": "EXPIRED",
+          "trigger": "deny_timeout",
+          "expected_next_state": "DENIED_TIMEOUT"
+        },
+        {
+          "state": "DENIED_TIMEOUT",
+          "trigger": "submit",
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "terminal_state_approved_rejects_operations",
+      "description": "APPROVED is terminal: rejects further operations",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "approve",
+          "expected_next_state": "APPROVED"
+        },
+        {
+          "state": "APPROVED",
+          "trigger": "timeout",
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "terminal_state_denied_rejects_operations",
+      "description": "DENIED is terminal: rejects further operations",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "deny",
+          "expected_next_state": "DENIED"
+        },
+        {
+          "state": "DENIED",
+          "trigger": "timeout",
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "terminal_state_denied_timeout_rejects_operations",
+      "description": "DENIED_TIMEOUT is terminal: rejects all operations except revoke",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "submit",
+          "expected_next_state": "PENDING_REVIEW"
+        },
+        {
+          "state": "PENDING_REVIEW",
+          "trigger": "timeout",
+          "expected_next_state": "EXPIRED"
+        },
+        {
+          "state": "EXPIRED",
+          "trigger": "deny_timeout",
+          "expected_next_state": "DENIED_TIMEOUT"
+        },
+        {
+          "state": "DENIED_TIMEOUT",
+          "trigger": "approve",
+          "expected_error": "invalid_transition"
+        }
+      ]
+    },
+    {
+      "name": "terminal_state_revoked_rejects_all_operations",
+      "description": "REVOKED is terminal: rejects all operations",
+      "transitions": [
+        {
+          "state": "REQUESTED",
+          "trigger": "revoke",
+          "expected_next_state": "REVOKED"
+        },
         {
           "state": "REVOKED",
           "trigger": "approve",
-          "expected_next_state": null,
-          "expected_error": "invalid_transition"
-        }
-      ]
-    },
-    {
-      "name": "unknown_trigger",
-      "description": "Unknown trigger results in invalid transition",
-      "transitions": [
-        {
-          "state": "PENDING_REVIEW",
-          "trigger": "invalid_action",
-          "expected_next_state": null,
           "expected_error": "invalid_transition"
         }
       ]

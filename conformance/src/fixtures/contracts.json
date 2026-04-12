@@ -1,239 +1,512 @@
 {
+  "suite_version": "1.0.0",
+  "description": "Contract validation fixtures (Level 1 - Aware). Tests contract parsing and schema validation.",
+  "total_fixtures": 45,
   "fixtures": [
     {
       "name": "valid_minimal_contract",
       "description": "Minimal valid contract with all required fields",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [
-          {
-            "name": "deploy",
-            "policy": {
-              "type": "enumeration",
-              "values": ["staging", "prod"]
-            }
-          }
-        ],
-        "attestation": {
-          "level": "aware"
-        }
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full"
       },
-      "expected_valid": true,
-      "expected_errors": []
+      "expected_valid": true
     },
     {
       "name": "valid_full_contract",
       "description": "Complete contract with all optional fields",
       "contract": {
         "version": "1.0.0",
-        "id": "ct_12345678",
-        "authority": "urn:atp:auth:example-corp",
-        "description": "Production deployment contract",
+        "id": "ctr_abc123",
+        "authority": "org.example.approve-payment",
+        "description": "Payment approval contract",
+        "actions": ["approve", "deny", "escalate"],
+        "attestation": "full",
+        "approval": {
+          "required": true,
+          "timeout": "PT4H",
+          "escalation_path": "finance_manager,finance_director"
+        },
+        "credentials": {
+          "provider": "stripe-api",
+          "scope": ["charges:write"],
+          "inject_as": "bearer_token",
+          "fail_closed": true
+        },
         "scope": {
-          "principal": "iam_user_*",
-          "resource": "service_prod_*"
+          "max_amount": 50000,
+          "recipient_domain": ["@trusted-vendors.com"],
+          "idempotency_model": "gateway-enforced"
         },
-        "actions": [
-          {
-            "name": "deploy",
-            "policy": {
-              "type": "domain",
-              "pattern": "*.example.com"
-            },
-            "approval": {
-              "required": true,
-              "mode": "async",
-              "escalation_timeout_seconds": 3600
-            }
-          },
-          {
-            "name": "rollback",
-            "policy": {
-              "type": "boolean"
-            }
-          }
-        ],
-        "attestation": {
-          "level": "verified",
-          "idempotency_model": "scoped",
-          "require_ack": true
-        },
-        "metadata": {
-          "team": "platform",
-          "criticality": "high"
+        "expiry": "2026-12-31T23:59:59Z",
+        "delegation": {
+          "max_depth": 2,
+          "allowed_roles": ["agent", "admin"]
         }
       },
-      "expected_valid": true,
-      "expected_errors": []
+      "expected_valid": true
     },
     {
       "name": "missing_version",
       "description": "Contract missing required version field",
       "contract": {
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [{ "name": "deploy" }],
-        "attestation": { "level": "aware" }
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full"
       },
       "expected_valid": false,
-      "expected_errors": [
-        {
-          "field": "version",
-          "code": "required"
-        }
-      ]
+      "expected_errors": [{ "field": "version", "code": "required" }]
     },
     {
       "name": "missing_authority",
       "description": "Contract missing required authority field",
       "contract": {
         "version": "1.0.0",
-        "actions": [{ "name": "deploy" }],
-        "attestation": { "level": "aware" }
+        "actions": ["send-email"],
+        "attestation": "full"
       },
       "expected_valid": false,
-      "expected_errors": [
-        {
-          "field": "authority",
-          "code": "required"
-        }
-      ]
+      "expected_errors": [{ "field": "authority", "code": "required" }]
     },
     {
       "name": "missing_actions",
       "description": "Contract missing required actions field",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "attestation": { "level": "aware" }
+        "authority": "org.example.send-email",
+        "attestation": "full"
       },
       "expected_valid": false,
-      "expected_errors": [
-        {
-          "field": "actions",
-          "code": "required"
-        }
-      ]
+      "expected_errors": [{ "field": "actions", "code": "required" }]
     },
     {
       "name": "missing_attestation",
       "description": "Contract missing required attestation field",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [{ "name": "deploy" }]
+        "authority": "org.example.send-email",
+        "actions": ["send-email"]
       },
       "expected_valid": false,
-      "expected_errors": [
-        {
-          "field": "attestation",
-          "code": "required"
-        }
-      ]
+      "expected_errors": [{ "field": "attestation", "code": "required" }]
     },
     {
-      "name": "invalid_version_format",
-      "description": "Version is not valid semver",
+      "name": "invalid_version_type",
+      "description": "Version field has wrong type (number instead of string)",
       "contract": {
-        "version": "not-a-version",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [{ "name": "deploy" }],
-        "attestation": { "level": "aware" }
+        "version": 1.0,
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full"
       },
       "expected_valid": false,
-      "expected_errors": [
-        {
-          "field": "version",
-          "code": "invalid_format"
-        }
-      ]
+      "expected_errors": [{ "field": "version", "code": "type_error" }]
     },
     {
-      "name": "invalid_authority_format",
-      "description": "Authority is not a valid URN",
+      "name": "invalid_authority_type",
+      "description": "Authority field has wrong type (array instead of string)",
       "contract": {
         "version": "1.0.0",
-        "authority": "not-a-urn",
-        "actions": [{ "name": "deploy" }],
-        "attestation": { "level": "aware" }
+        "authority": ["org.example.send-email"],
+        "actions": ["send-email"],
+        "attestation": "full"
       },
       "expected_valid": false,
-      "expected_errors": [
-        {
-          "field": "authority",
-          "code": "invalid_format"
-        }
-      ]
+      "expected_errors": [{ "field": "authority", "code": "type_error" }]
+    },
+    {
+      "name": "invalid_actions_type",
+      "description": "Actions field has wrong type (string instead of array)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": "send-email",
+        "attestation": "full"
+      },
+      "expected_valid": false,
+      "expected_errors": [{ "field": "actions", "code": "type_error" }]
+    },
+    {
+      "name": "invalid_attestation_type",
+      "description": "Attestation field has wrong type (object instead of string)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": { "level": "full" }
+      },
+      "expected_valid": false,
+      "expected_errors": [{ "field": "attestation", "code": "type_error" }]
+    },
+    {
+      "name": "invalid_attestation_value",
+      "description": "Attestation field has invalid value",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "invalid"
+      },
+      "expected_valid": false,
+      "expected_errors": [{ "field": "attestation", "code": "invalid_value" }]
+    },
+    {
+      "name": "empty_version_string",
+      "description": "Version field is empty string",
+      "contract": {
+        "version": "",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full"
+      },
+      "expected_valid": false,
+      "expected_errors": [{ "field": "version", "code": "invalid_format" }]
+    },
+    {
+      "name": "version_0_0_0",
+      "description": "Version is 0.0.0 (boundary case)",
+      "contract": {
+        "version": "0.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full"
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "empty_authority_string",
+      "description": "Authority field is empty string",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "",
+        "actions": ["send-email"],
+        "attestation": "full"
+      },
+      "expected_valid": false,
+      "expected_errors": [{ "field": "authority", "code": "invalid_format" }]
     },
     {
       "name": "empty_actions_array",
-      "description": "Contract with empty actions array",
+      "description": "Actions field is empty array",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
+        "authority": "org.example.send-email",
         "actions": [],
-        "attestation": { "level": "aware" }
+        "attestation": "full"
       },
       "expected_valid": false,
-      "expected_errors": [
-        {
-          "field": "actions",
-          "code": "min_items"
-        }
-      ]
+      "expected_errors": [{ "field": "actions", "code": "min_items" }]
     },
     {
-      "name": "invalid_attestation_level",
-      "description": "Attestation level is not recognized",
+      "name": "actions_100_items",
+      "description": "Actions array with 100 items (boundary case)",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [{ "name": "deploy" }],
-        "attestation": { "level": "unknown_level" }
+        "authority": "org.example.send-email",
+        "actions": ["action-0", "action-1", "action-2", "action-3", "action-4", "action-5", "action-6", "action-7", "action-8", "action-9", "action-10", "action-11", "action-12", "action-13", "action-14", "action-15", "action-16", "action-17", "action-18", "action-19", "action-20", "action-21", "action-22", "action-23", "action-24", "action-25", "action-26", "action-27", "action-28", "action-29", "action-30", "action-31", "action-32", "action-33", "action-34", "action-35", "action-36", "action-37", "action-38", "action-39", "action-40", "action-41", "action-42", "action-43", "action-44", "action-45", "action-46", "action-47", "action-48", "action-49", "action-50", "action-51", "action-52", "action-53", "action-54", "action-55", "action-56", "action-57", "action-58", "action-59", "action-60", "action-61", "action-62", "action-63", "action-64", "action-65", "action-66", "action-67", "action-68", "action-69", "action-70", "action-71", "action-72", "action-73", "action-74", "action-75", "action-76", "action-77", "action-78", "action-79", "action-80", "action-81", "action-82", "action-83", "action-84", "action-85", "action-86", "action-87", "action-88", "action-89", "action-90", "action-91", "action-92", "action-93", "action-94", "action-95", "action-96", "action-97", "action-98", "action-99"],
+        "attestation": "full"
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "invalid_approval_timeout_format",
+      "description": "Approval timeout is not a valid ISO 8601 duration",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "approval": {
+          "required": true,
+          "timeout": "invalid"
+        }
       },
       "expected_valid": false,
-      "expected_errors": [
-        {
-          "field": "attestation.level",
-          "code": "invalid_enum"
-        }
-      ]
+      "expected_errors": [{ "field": "approval.timeout", "code": "invalid_iso8601_duration" }]
     },
     {
-      "name": "unsafe_idempotency_without_ack",
-      "description": "Unsafe idempotency model requires ack flag",
+      "name": "valid_approval_timeout_1h",
+      "description": "Approval timeout with valid ISO 8601 format (PT1H)",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [{ "name": "deploy" }],
-        "attestation": {
-          "level": "verified",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "approval": {
+          "required": true,
+          "timeout": "PT1H"
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "valid_approval_timeout_1d",
+      "description": "Approval timeout with valid ISO 8601 format (P1D)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "approval": {
+          "required": true,
+          "timeout": "P1D"
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "delegation_max_depth_0",
+      "description": "Delegation max_depth at boundary (0)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "delegation": {
+          "max_depth": 0
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "delegation_max_depth_5",
+      "description": "Delegation max_depth at boundary (5)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "delegation": {
+          "max_depth": 5
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "delegation_max_depth_negative",
+      "description": "Delegation max_depth with negative value",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "delegation": {
+          "max_depth": -1
+        }
+      },
+      "expected_valid": false,
+      "expected_errors": [{ "field": "delegation.max_depth", "code": "minimum" }]
+    },
+    {
+      "name": "expiry_in_past",
+      "description": "Expiry datetime in the past",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "expiry": "2020-01-01T00:00:00Z"
+      },
+      "expected_valid": false,
+      "expected_errors": [{ "field": "expiry", "code": "must_be_future" }]
+    },
+    {
+      "name": "expiry_far_future",
+      "description": "Expiry datetime far in the future",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "expiry": "2099-12-31T23:59:59Z"
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "expiry_malformed_iso",
+      "description": "Expiry datetime is malformed ISO string",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "expiry": "invalid-date"
+      },
+      "expected_valid": false,
+      "expected_errors": [{ "field": "expiry", "code": "invalid_iso8601" }]
+    },
+    {
+      "name": "idempotency_model_gateway_enforced",
+      "description": "Valid idempotency model (gateway-enforced)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "scope": {
+          "idempotency_model": "gateway-enforced"
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "idempotency_model_tool_native",
+      "description": "Valid idempotency model (tool-native)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "scope": {
+          "idempotency_model": "tool-native"
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "idempotency_model_unsafe_with_ack",
+      "description": "Unsafe idempotency with acknowledgment",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "scope": {
+          "idempotency_model": "unsafe",
+          "idempotency_ack": true
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "idempotency_model_unsafe_without_ack",
+      "description": "Unsafe idempotency without acknowledgment",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "scope": {
           "idempotency_model": "unsafe"
         }
       },
       "expected_valid": false,
-      "expected_errors": [
-        {
-          "field": "attestation.require_ack",
-          "code": "required_with_unsafe"
-        }
-      ]
+      "expected_errors": [{ "field": "scope", "code": "idempotency_ack_required" }]
     },
     {
-      "name": "safe_idempotency_with_ack",
-      "description": "Safe idempotency model allows ack flag",
+      "name": "idempotency_model_invalid",
+      "description": "Invalid idempotency model value",
       "contract": {
         "version": "1.0.0",
-        "authority": "urn:atp:auth:example-corp",
-        "actions": [{ "name": "deploy" }],
-        "attestation": {
-          "level": "verified",
-          "idempotency_model": "scoped",
-          "require_ack": true
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "scope": {
+          "idempotency_model": "invalid_model"
         }
       },
-      "expected_valid": true,
-      "expected_errors": []
+      "expected_valid": false,
+      "expected_errors": [{ "field": "scope.idempotency_model", "code": "invalid_value" }]
+    },
+    {
+      "name": "credentials_inject_as_oauth_token",
+      "description": "Credentials with valid injection method (oauth_token)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "credentials": {
+          "provider": "gmail-api",
+          "scope": ["send"],
+          "inject_as": "oauth_token"
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "credentials_inject_as_api_key",
+      "description": "Credentials with valid injection method (api_key)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "credentials": {
+          "provider": "stripe-api",
+          "scope": ["charges:write"],
+          "inject_as": "api_key"
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "credentials_inject_as_bearer_token",
+      "description": "Credentials with valid injection method (bearer_token)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "credentials": {
+          "provider": "example-api",
+          "scope": ["read"],
+          "inject_as": "bearer_token"
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "credentials_inject_as_basic_auth",
+      "description": "Credentials with valid injection method (basic_auth)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "credentials": {
+          "provider": "ldap-api",
+          "scope": ["read"],
+          "inject_as": "basic_auth"
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "credentials_inject_as_custom",
+      "description": "Credentials with valid injection method (custom)",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "credentials": {
+          "provider": "custom-provider",
+          "scope": ["action"],
+          "inject_as": "custom",
+          "custom_injection_path": "/headers/X-Custom-Auth"
+        }
+      },
+      "expected_valid": true
+    },
+    {
+      "name": "credentials_inject_as_invalid",
+      "description": "Credentials with invalid injection method",
+      "contract": {
+        "version": "1.0.0",
+        "authority": "org.example.send-email",
+        "actions": ["send-email"],
+        "attestation": "full",
+        "credentials": {
+          "provider": "example-api",
+          "scope": ["read"],
+          "inject_as": "invalid_method"
+        }
+      },
+      "expected_valid": false,
+      "expected_errors": [{ "field": "credentials.inject_as", "code": "invalid_value" }]
     }
   ]
 }

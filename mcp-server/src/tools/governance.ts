@@ -276,16 +276,8 @@ export type RegisterToolInput = z.infer<typeof RegisterToolInput>;
 /**
  * Register a tool handler with ATP governance.
  *
- * This tool registers the binding between an action name and a contract ID.
- * In a real MCP server, you would implement the actual tool handler here.
- * For the MCP server, we register a pass-through handler that logs and returns
- * a success response.
- *
- * In production, each MCP tool would have an actual handler that performs
- * the real work (send email, modify data, etc.). The handler runs AFTER
- * all ATP checks pass (authority, policy, approval, credentials).
- *
- * The registration persists for the lifetime of the gateway process.
+ * This registers the binding between an action name and its governing contract.
+ * The handler runs after all ATP checks pass (authority, policy, approval, credentials).
  *
  * Use this when: onboarding new MCP tools into the governance system,
  * changing which contract governs a tool, or testing governance flows.
@@ -294,8 +286,6 @@ export async function registerToolTool(input: RegisterToolInput): Promise<object
   const gateway = getGateway();
 
   try {
-    // Register a simple echo handler for this tool
-    // In a real implementation, you'd replace this with actual tool logic
     gateway.registerTool(
       input.tool_name,
       input.contract_id,

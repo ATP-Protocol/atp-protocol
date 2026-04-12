@@ -22,6 +22,9 @@ export {
 
 export { ConformanceRunner, runConformanceTests } from "./runner";
 
+// Export adapters
+export { ReferenceAtpAdapter, createReferenceAdapter } from "./adapters/reference";
+
 // Export fixtures
 export { default as contractFixtures } from "./fixtures/contracts.json";
 export { default as policyFixtures } from "./fixtures/policy.json";

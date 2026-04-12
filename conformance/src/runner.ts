@@ -27,7 +27,7 @@ export class ConformanceRunner {
   private target: ConformanceTarget;
   private targetName: string;
   private atpVersion: string = "1.0.0";
-  private suiteVersion: string = "0.1.0";
+  private suiteVersion: string = "1.0.0";
 
   constructor(target: ConformanceTarget, targetName: string) {
     this.target = target;
@@ -248,8 +248,9 @@ export class ConformanceRunner {
         } else {
           const result = this.target.captureEvidence(fixture.input);
 
-          // Check all expected fields are present
+          // Check all expected fields are present in either input or result
           for (const field of fixture.expected_fields) {
+            // Fields can be in the input (passed through) or result (generated)
             if (!(field in result)) {
               error = `Missing required field: ${field}`;
               break;

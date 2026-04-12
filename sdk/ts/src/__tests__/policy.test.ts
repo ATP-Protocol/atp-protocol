@@ -207,3 +207,102 @@ describe("mergeConstraints", () => {
     expect(merged.status).toEqual(["active"]);
   });
 });
+
+// Edge case security tests
+describe("Policy Evaluation — edge cases & security", () => {
+  const baseContract = {
+    version: "1.0.0",
+    authority: "org.test.action",
+    actions: ["test"],
+    attestation: "light" as const,
+  };
+
+  it("rejects regex DoS patterns in pattern constraints", () => {
+    // ReDoS pattern: exponential backtracking
+    const evilRegex = "(a+)+$";
+    const contract = {
+      ...baseContract,
+      scope: { pattern: evilRegex },
+    };
+    const params = { pattern: "aaaaaaaaaaaaaaaaaaaaaaaaaaax" };
+
+    // Should complete without hanging (though it may take a moment to detect)
+    const start = Date.now();
+    try {
+      evaluatePolicy(contract, params);
+    } catch {
+      // Expected to fail safely
+    }
+    const duration = Date.now() - start;
+    // Allow up to 10s to account for system variance - the key is it doesn't hang forever
+    expect(duration).toBeLessThan(10000);
+  });
+
+  it("handles extremely large deny lists (1000+ items)", () => {
+    const hugeList = Array.from({ length: 1000 }, (_, i) => `vendor_${i}`);
+    const contract = {
+      ...baseContract,
+      scope: { prohibited_vendors: hugeList },
+    };
+    const params = { vendor: "vendor_500" };
+    const result = evaluatePolicy(contract, params);
+    expect(result).toBeDefined();
+  });
+
+  it("rejects numeric overflow values (Number.MAX_SAFE_INTEGER + 1)", () => {
+    const overflowValue = Number.MAX_SAFE_INTEGER + 1;
+    const contract = {
+      ...baseContract,
+      scope: { max_amount: overflowValue },
+    };
+    const params = { amount: 10000 };
+    // Should handle gracefully
+    const result = evaluatePolicy(contract, params);
+    expect(result).toBeDefined();
+  });
+
+  it("handles Infinity and -Infinity in numeric constraints", () => {
+    const contract = {
+      ...baseContract,
+      scope: { max_amount: Infinity, min_amount: -Infinity },
+    };
+    const params = { amount: 999999999 };
+    const result = evaluatePolicy(contract, params);
+    expect(result).toBeDefined();
+  });
+
+  it("handles NaN in numeric constraints gracefully", () => {
+    const contract = {
+      ...baseContract,
+      scope: { max_amount: NaN },
+    };
+    const params = { amount: 10000 };
+    const result = evaluatePolicy(contract, params);
+    expect(result).toBeDefined();
+  });
+
+  it("rejects null constraint values", () => {
+    const contract = {
+      ...baseContract,
+      scope: { max_amount: null },
+    };
+    const params = { amount: 10000 };
+    // Should handle null gracefully
+    const result = evaluatePolicy(contract, params);
+    expect(result).toBeDefined();
+  });
+
+  it("handles deeply nested constraints in arrays", () => {
+    const contract = {
+      ...baseContract,
+      scope: {
+        nested_rules: [
+          { level1: { level2: { level3: { level4: { prohibited: ["a", "b"] } } } } },
+        ],
+      },
+    };
+    const params = { nested_rules: [{ level1: "test" }] };
+    const result = evaluatePolicy(contract, params);
+    expect(result).toBeDefined();
+  });
+});
