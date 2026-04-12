@@ -1,0 +1,13 @@
+{
+  "name": "atp-live-dual-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "End-to-end ATP governance demo against the live DUAL network",
+  "scripts": {
+    "demo": "tsx src/demo.ts"
+  },
+  "dependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.3"
+  }
+}
