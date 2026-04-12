@@ -1,0 +1,23 @@
+{
+  "version": "1.0.0",
+  "authority": "org.operations.read-inventory",
+  "template": "tpl_read_only",
+  "actions": ["read-inventory"],
+  "scope": {
+    "operation": "read-only",
+    "data_classification": ["internal", "non-confidential"]
+  },
+  "approval": {
+    "required": false
+  },
+  "credentials": {
+    "provider": "inventory-api",
+    "scope": ["inventory.read"],
+    "inject_as": "bearer_token",
+    "fail_closed": false
+  },
+  "attestation": "light",
+  "revocable": false,
+  "expiry": "2027-12-31T23:59:59Z",
+  "idempotency": "tool-native"
+}

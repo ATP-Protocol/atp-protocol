@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0",
+  "authority": "org.procurement.send-email",
+  "template": "tpl_vendor_communication",
+  "actions": ["send-email"],
+  "scope": {
+    "recipient_domain": ["@approved-vendors.com", "@internal.company.com"],
+    "max_attachments": 5,
+    "prohibited_content": ["wire transfer instructions", "payment routing", "swift code"]
+  },
+  "approval": {
+    "required": true,
+    "required_above": null,
+    "approver_role": "procurement_manager",
+    "timeout": "PT4H",
+    "escalation_path": "department_head,cfo"
+  },
+  "credentials": {
+    "provider": "gmail",
+    "scope": ["mail.send"],
+    "inject_as": "oauth_token",
+    "fail_closed": true
+  },
+  "output": {
+    "object_type": "procurement_communication",
+    "initial_state": "sent",
+    "schema_ref": "schemas/procurement-email-v1.json"
+  },
+  "attestation": "full",
+  "revocable": true,
+  "expiry": "2027-01-01T00:00:00Z",
+  "idempotency": "gateway-enforced"
+}
