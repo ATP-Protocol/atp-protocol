@@ -496,7 +496,10 @@ function matchesQuery(entry: ContractEntry, query: RegistryQuery): boolean {
   }
 
   if (query.authority_pattern) {
-    const pattern = query.authority_pattern.replace(/\*/g, ".*");
+    // Limit wildcard count to prevent ReDoS via catastrophic backtracking
+    const wildcardCount = (query.authority_pattern.match(/\*/g) || []).length;
+    if (wildcardCount > 3) return false;
+    const pattern = query.authority_pattern.replace(/\*/g, "[^.]*");
     const regex = new RegExp(`^${pattern}$`);
     if (!regex.test(entry.contract.authority)) return false;
   }
@@ -538,6 +541,13 @@ function sha256(input: string): string {
 
 function canonicalJson(obj: unknown): string {
   if (obj === null || obj === undefined) return "null";
+  if (typeof obj === "number") {
+    if (Number.isNaN(obj)) return '"__NaN__"';
+    if (obj === Infinity) return '"__Infinity__"';
+    if (obj === -Infinity) return '"__-Infinity__"';
+    if (Object.is(obj, -0)) return '"__-0__"';
+    return JSON.stringify(obj);
+  }
   if (typeof obj !== "object") return JSON.stringify(obj);
   if (Array.isArray(obj)) {
     return `[${obj.map(canonicalJson).join(",")}]`;

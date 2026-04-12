@@ -7,7 +7,7 @@
  * Follows ATP Spec Section 9 — Execution Semantics.
  */
 
-import { createHash, createHmac } from "crypto";
+import { createHash, createHmac, randomBytes } from "crypto";
 import type {
   ATPContract,
   ExecutionOutcome,
@@ -177,9 +177,20 @@ export async function execute<T>(
     // Pre-execution hook
     await options.hooks?.onBeforeExecute?.(ctx);
 
-    // Execute handler
-    const result = await handler(ctx);
+    // Execute handler with hard timeout via Promise.race
+    const result = await Promise.race([
+      handler(ctx),
+      new Promise<never>((_, reject) => {
+        const id = setTimeout(() => {
+          controller.abort();
+          reject(new Error("EXECUTION_TIMEOUT"));
+        }, timeoutMs + 100); // Slightly after AbortController for clean abort-first
+        // Store to clear if handler resolves first
+        (controller as any).__hardTimeout = id;
+      }),
+    ]);
     clearTimeout(timeoutHandle);
+    clearTimeout((controller as any).__hardTimeout);
 
     const completedAt = new Date();
     const outcome = classifyOutcome(result);
@@ -321,10 +332,11 @@ export function generateIdempotencyKey(
  * Generate a unique execution ID.
  */
 export function generateExecutionId(): string {
+  const bytes = randomBytes(16);
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let result = "exe_";
   for (let i = 0; i < 16; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += chars.charAt(bytes[i] % chars.length);
   }
   return result;
 }
@@ -398,6 +410,13 @@ function sha256(input: string): string {
 
 function canonicalJson(obj: unknown): string {
   if (obj === null || obj === undefined) return "null";
+  if (typeof obj === "number") {
+    if (Number.isNaN(obj)) return '"__NaN__"';
+    if (obj === Infinity) return '"__Infinity__"';
+    if (obj === -Infinity) return '"__-Infinity__"';
+    if (Object.is(obj, -0)) return '"__-0__"';
+    return JSON.stringify(obj);
+  }
   if (typeof obj !== "object") return JSON.stringify(obj);
   if (Array.isArray(obj)) {
     return `[${obj.map(canonicalJson).join(",")}]`;

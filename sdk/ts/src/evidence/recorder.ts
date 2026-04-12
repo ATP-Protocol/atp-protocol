@@ -5,7 +5,7 @@
  * Follows ATP Spec Section 10 — Evidence & Attestation.
  */
 
-import { createHash } from "crypto";
+import { createHash, randomBytes } from "crypto";
 import type {
   EvidenceRecord,
   EvidenceTimestamps,
@@ -376,6 +376,13 @@ function sha256(input: string): string {
 
 function canonicalJson(obj: unknown): string {
   if (obj === null || obj === undefined) return "null";
+  if (typeof obj === "number") {
+    if (Number.isNaN(obj)) return '"__NaN__"';
+    if (obj === Infinity) return '"__Infinity__"';
+    if (obj === -Infinity) return '"__-Infinity__"';
+    if (Object.is(obj, -0)) return '"__-0__"';
+    return JSON.stringify(obj);
+  }
   if (typeof obj !== "object") return JSON.stringify(obj);
   if (Array.isArray(obj)) {
     return `[${obj.map(canonicalJson).join(",")}]`;
@@ -389,10 +396,11 @@ function canonicalJson(obj: unknown): string {
 }
 
 function generateEvidenceId(): string {
+  const bytes = randomBytes(12);
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let result = "evi_";
   for (let i = 0; i < 12; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += chars.charAt(bytes[i] % chars.length);
   }
   return result;
 }

@@ -638,6 +638,13 @@ function sha256(input: string): string {
 
 function canonicalJson(obj: unknown): string {
   if (obj === null || obj === undefined) return "null";
+  if (typeof obj === "number") {
+    if (Number.isNaN(obj)) return '"__NaN__"';
+    if (obj === Infinity) return '"__Infinity__"';
+    if (obj === -Infinity) return '"__-Infinity__"';
+    if (Object.is(obj, -0)) return '"__-0__"';
+    return JSON.stringify(obj);
+  }
   if (typeof obj !== "object") return JSON.stringify(obj);
   if (Array.isArray(obj)) {
     return `[${obj.map(canonicalJson).join(",")}]`;
