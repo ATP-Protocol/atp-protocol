@@ -97,6 +97,8 @@ atp-protocol/
 │   └── src/                 # Full governed execution pipeline with middleware
 ├── conformance/             # Conformance test suite (@atp-protocol/conformance)
 │   └── src/                 # Fixtures, runner, self-tests
+├── mcp-server/              # ATP MCP server (@atp-protocol/mcp-server)
+│   └── src/                 # 12 governance tools for any MCP client
 ├── docs/                    # Documentation site (Docusaurus)
 ├── examples/                # Getting started
 │   ├── contracts/           # Example ATP contracts
@@ -111,8 +113,9 @@ atp-protocol/
 |---------|----------|---------|-------|
 | `@atp-protocol/sdk` | TypeScript | `npm install @atp-protocol/sdk` | 81 |
 | `atp-protocol` | Python | `pip install atp-protocol` | 116 |
-| `@atp-protocol/gateway` | TypeScript | `npm install @atp-protocol/gateway` | 20 |
+| `@atp-protocol/gateway` | TypeScript | `npm install @atp-protocol/gateway` | 43 |
 | `@atp-protocol/conformance` | TypeScript | `npm install @atp-protocol/conformance` | 8 |
+| `@atp-protocol/mcp-server` | TypeScript | `npx @atp-protocol/mcp-server` | — |
 
 ## Conformance levels
 
@@ -142,8 +145,10 @@ Open source gives ATP reach. DUAL gives ATP depth.
 - [x] Full protocol specification (14 sections, v1.0.0-draft.2)
 - [x] TypeScript SDK (4 modules, 81 tests)
 - [x] Python SDK (4 modules, 116 tests)
-- [x] Reference gateway (full pipeline, 20 tests)
+- [x] Reference gateway with DUAL integration (full pipeline, 43 tests)
 - [x] Conformance test suite (61 fixtures, 4 levels)
+- [x] MCP server (12 governance tools for any MCP client)
+- [x] End-to-end demo (6 governed scenarios with terminal output)
 - [x] Documentation site (Docusaurus, 20+ pages)
 - [x] CI pipeline (TS Node 18/20/22, Python 3.10/3.11/3.12)
 - [x] Publish workflow (npm + PyPI on release)
