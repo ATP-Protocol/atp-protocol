@@ -85,13 +85,21 @@ The full protocol specification is available at [`spec/ATP-SPEC-v1.md`](spec/ATP
 ```
 atp-protocol/
 ├── spec/                    # Protocol specification
-│   ├── ATP-SPEC-v1.md       # Core protocol spec (v1.0.0-draft.2)
+│   ├── ATP-SPEC-v1.md       # Core protocol spec (v1.0.0-draft.2, 14 sections)
 │   ├── schemas/             # Canonical JSON schemas
 │   │   └── atp-contract.schema.json
 │   └── rfcs/                # RFC process for spec evolution
 │       └── 0000-template.md
+├── sdk/ts/                  # TypeScript SDK (@atp-protocol/sdk)
+│   └── src/                 # Contract validation, policy eval, approval FSM, governance wrapper
+├── gateway/                 # Reference gateway (@atp-protocol/gateway)
+│   └── src/                 # Full governed execution pipeline with middleware
+├── examples/                # Getting started
+│   ├── contracts/           # Example ATP contracts
+│   └── quick-start.ts       # Full SDK usage example
 ├── docs/                    # Documentation and guides
 │   └── POSITIONING.md       # Public strategy document
+├── .github/workflows/       # CI pipeline
 ├── LICENSE                  # Apache 2.0
 ├── CONTRIBUTING.md          # Contribution guidelines
 └── CODE_OF_CONDUCT.md       # Community standards
@@ -102,9 +110,9 @@ atp-protocol/
 | Repo | Status | Description |
 |------|--------|-------------|
 | `atp-protocol` | **Active** | Spec, schemas, docs |
-| `atp-sdk-ts` | In progress | TypeScript SDK (`@atp-protocol/sdk` on npm) |
+| `sdk/ts` | **Active** | TypeScript SDK (`@atp-protocol/sdk`) — 81 tests |
+| `gateway` | **Active** | Reference gateway implementation — 20 tests |
 | `atp-sdk-python` | Planned | Python SDK (`atp-protocol` on PyPI) |
-| `atp-gateway` | Planned | Reference gateway implementation |
 | `atp-conformance` | Planned | Conformance test suite |
 
 ## Conformance levels
@@ -133,10 +141,13 @@ Open source gives ATP reach. DUAL gives ATP depth.
 - [x] Protocol positioning and strategy
 - [x] Core contract schema
 - [x] Full protocol specification (14 sections, v1.0.0-draft.2)
-- [ ] TypeScript SDK
+- [x] TypeScript SDK (4 modules, 81 tests)
+- [x] Reference gateway (full pipeline, 20 tests)
+- [x] CI pipeline (GitHub Actions, Node 18/20/22)
+- [x] Example contracts and quick-start guide
 - [ ] Python SDK
-- [ ] Reference gateway
-- [ ] Conformance suite
+- [ ] Conformance test suite (standalone)
+- [ ] npm publish
 
 ## Contributing
 
