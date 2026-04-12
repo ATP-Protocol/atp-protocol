@@ -1,0 +1,31 @@
+{
+  "name": "@atp-protocol/mcp-server",
+  "version": "0.1.0",
+  "description": "ATP governance as an MCP server — govern AI agent execution from any MCP client",
+  "main": "dist/index.js",
+  "bin": {
+    "atp-mcp-server": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "keywords": [
+    "atp",
+    "agent-trust-protocol",
+    "governance",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "author": "ATP Protocol",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "typescript": "^5.6.2"
+  }
+}

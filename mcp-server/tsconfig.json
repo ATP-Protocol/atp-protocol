@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "lib": ["ES2022"],
+    "declaration": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@atp-protocol/sdk": ["../sdk/ts/dist/cjs/index"],
+      "@atp-protocol/sdk/*": ["../sdk/ts/dist/cjs/*"],
+      "@atp-protocol/gateway": ["../gateway/dist/cjs/index"],
+      "@atp-protocol/gateway/*": ["../gateway/dist/cjs/*"]
+    },
+    "baseUrl": ".",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}
