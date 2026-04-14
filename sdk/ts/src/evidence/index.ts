@@ -24,6 +24,13 @@ export {
   MultiBackend,
 } from "./backends";
 
+export {
+  PostgresBackend,
+  type PostgresBackendConfig,
+  type ChainVerificationResult,
+  type ChainError,
+} from "./postgres-backend";
+
 export type {
   EvidenceBuildInput,
   EvidenceVerification,
