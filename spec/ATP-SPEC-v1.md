@@ -13,7 +13,7 @@
 
 The Agent Trust Protocol (ATP) is an open protocol for governed execution of AI agent actions. It standardizes how authority, policy, approval, credential access, execution controls, and evidence work when AI agents take consequential actions in operational systems.
 
-ATP is designed to run natively on the DUAL network for wallet-bound identity, organization primitives, object state management, action provenance, and durable attestation.
+ATP is designed to run with pluggable attestation backends for wallet-bound identity, organization primitives, object state management, action provenance, and durable attestation.
 
 ## Table of Contents
 
@@ -30,7 +30,7 @@ ATP is designed to run natively on the DUAL network for wallet-bound identity, o
 11. [Operational Semantics](#11-operational-semantics)
 12. [Conformance Levels](#12-conformance-levels)
 13. [Security Considerations](#13-security-considerations)
-14. [DUAL Network Integration](#14-dual-network-integration)
+14. [External Attestation Backend](#14-external-attestation-backend)
 
 ---
 
@@ -44,11 +44,11 @@ ATP is designed to run natively on the DUAL network for wallet-bound identity, o
 | **Contract** | A JSON document declaring the authority, policy, approval, credential, and evidence requirements for governed execution. |
 | **Gateway** | A reverse proxy that mediates governed execution: evaluating policy, gating approval, brokering credentials, and capturing evidence. |
 | **Principal** | The human or organization on whose behalf an agent acts. |
-| **Wallet** | A DUAL wallet providing cryptographic identity (SECP256K1 keypair) for an agent or principal. |
-| **Organization** | A DUAL organization providing the authority boundary and delegation scope. |
-| **Template** | A reusable policy pattern registered on DUAL, referenced by contracts. |
-| **Object** | A DUAL object representing governed business state. |
-| **Attestation** | A cryptographically signed evidence record anchored on DUAL. |
+| **Wallet** | A wallet providing cryptographic identity (SECP256K1 keypair) for an agent or principal. |
+| **Organization** | An organization providing the authority boundary and delegation scope. |
+| **Template** | A reusable policy pattern registered with an attestation backend, referenced by contracts. |
+| **Object** | An object representing governed business state. |
+| **Attestation** | A cryptographically signed evidence record durably attested to an external backend. |
 | **Evidence** | The record of what was requested, approved, executed, denied, or left unresolved. |
 
 ## 2. Architecture
@@ -63,7 +63,7 @@ ATP defines a vertical enforcement model with five layers:
 | L2 | Policy | Rules, schemas, compliance constraints. *What are the bounds?* |
 | L3 | **Trust & Control (ATP)** | Governance, delegation enforcement, policy compliance. *Is this allowed?* |
 | L4 | State | Immutable object ledger, durable business state. *What changed?* |
-| L5 | Attestation | Proof and evidence, on-chain anchoring. *What proof exists?* |
+| L5 | Attestation | Proof and evidence, external attestation. *What proof exists?* |
 
 ATP operates at L3 and orchestrates enforcement across all five layers.
 
@@ -76,7 +76,7 @@ The horizontal positioning relative to commoditizing layers:
 | L1 | Skills & Methodology | Commoditizing |
 | L2 | Tools & Execution (MCP, REST) | Commoditizing |
 | L3 | **Trust & Control (ATP)** | **Defensible** |
-| L4 | Finality & Evidence (DUAL) | Supporting |
+| L4 | Finality & Evidence (External Backend) | Supporting |
 
 ### 2.3 Governed Execution Flow
 
@@ -94,21 +94,21 @@ ATP Gateway
     ├── Execution Control (mediated action)
     │     └── handles success/failure/timeout/partial/unknown
     └── Evidence Capture
-          └── attestation recorded on DUAL
+          └── attestation recorded to external backend
 ```
 
 ## 3. Core Primitives
 
-ATP operates over six core primitives, each mapping to DUAL network constructs:
+ATP operates over six core primitives, each mapping to attestation backend constructs:
 
-| Primitive | DUAL Mapping | Purpose |
-|-----------|-------------|---------|
-| **Wallet** | DUAL Wallet (SECP256K1) | Agent and principal identity |
-| **Organization** | DUAL Organization | Authority boundary, delegation scope |
-| **Template** | DUAL Template | Reusable policy schema |
-| **Object** | DUAL Object | Governed business state |
-| **Action** | DUAL Action | State transition, what agents can do |
-| **Face** | DUAL Face | Presentation/disclosure layer |
+| Primitive | Backend Mapping | Purpose |
+|-----------|-----------------|---------|
+| **Wallet** | Wallet (SECP256K1) | Agent and principal identity |
+| **Organization** | Organization | Authority boundary, delegation scope |
+| **Template** | Template | Reusable policy schema |
+| **Object** | Attested Object | Governed business state |
+| **Action** | Action | State transition, what agents can do |
+| **Face** | Face | Presentation/disclosure layer |
 
 ## 4. Execution Contract
 
@@ -200,7 +200,7 @@ org.partner-b.agents.procurement-bot
 ```
 
 Federation requires:
-- An explicit federation agreement between organizations, registered as a DUAL object.
+- An explicit federation agreement between organizations, recorded in the attestation backend.
 - Both organizations MUST have active wallets and a recorded trust relationship.
 - The delegating organization specifies exactly which authorities are federated, with what constraints, and for what duration.
 - Federated authority is always narrower than or equal to the source authority. It cannot be expanded by the receiving organization.
@@ -237,7 +237,7 @@ Policies are evaluated from four sources in strict precedence order (most restri
 | Priority | Source | Description |
 |----------|--------|-------------|
 | 1 (highest) | Organization policy | Org-wide rules that override everything below |
-| 2 | Template policy | Reusable patterns registered on DUAL |
+| 2 | Template policy | Reusable patterns registered with attestation backend |
 | 3 | Contract policy | Action-specific constraints in the `scope` field |
 | 4 (lowest) | Runtime defaults | Gateway-level defaults for unconstrained fields |
 
@@ -602,22 +602,22 @@ An ATP evidence record contains the following fields:
 
 | Level | What is recorded | Where |
 |-------|-----------------|-------|
-| `full` | Complete evidence record with all fields, hashes, and policy snapshots | Gateway + DUAL |
-| `light` | Action metadata: authority, action, outcome, timestamps, wallet | Gateway + DUAL |
+| `full` | Complete evidence record with all fields, hashes, and policy snapshots | Gateway + External Backend |
+| `light` | Action metadata: authority, action, outcome, timestamps, wallet | Gateway + External Backend |
 | `none` | No evidence recorded | Nowhere (development only) |
 
 Production contracts MUST use `full` or `light`. Gateways MUST reject contracts with `attestation: "none"` outside of explicitly configured development environments.
 
 ### 10.3 Attestation Anchoring
 
-For `full` and `light` evidence, the gateway anchors the evidence on the DUAL network:
+For `full` and `light` evidence, the gateway anchors the evidence to the external attestation backend:
 
 1. Gateway constructs the evidence record.
 2. Gateway computes the evidence hash: `SHA-256(canonical_json(evidence_record))`.
-3. Gateway signs the hash with the gateway's DUAL wallet (SECP256K1).
-4. Gateway submits the signed evidence to DUAL as an attestation action.
-5. DUAL records the attestation as an immutable object with provenance.
-6. Gateway receives the DUAL attestation reference (object ID + transaction hash).
+3. Gateway signs the hash with the gateway's wallet (SECP256K1).
+4. Gateway submits the signed evidence to the attestation backend as an attestation record.
+5. The attestation backend records the attestation as a durable, auditable entry with provenance.
+6. Gateway receives the attestation reference (unique identifier + timestamp).
 7. Gateway appends the attestation reference to the local evidence record.
 
 ### 10.4 Attestation Verification
@@ -625,17 +625,17 @@ For `full` and `light` evidence, the gateway anchors the evidence on the DUAL ne
 Any party with the evidence ID can verify an attestation:
 
 1. Retrieve the evidence record from the gateway (or from the requesting organization's evidence store).
-2. Retrieve the attestation object from DUAL using the attestation reference.
-3. Verify the evidence hash matches the DUAL-anchored hash.
+2. Retrieve the attestation record from the backend using the attestation reference.
+3. Verify the evidence hash matches the attested hash.
 4. Verify the gateway's wallet signature.
-5. Verify the attestation object's provenance chain on DUAL.
+5. Verify the attestation record's provenance chain in the backend.
 
 If any verification step fails, the evidence is considered unverified. This does not mean the action did not happen — it means the evidence record cannot be independently confirmed.
 
 ### 10.5 Evidence Retention
 
 - Gateways MUST retain evidence records locally for a minimum of 90 days.
-- DUAL-anchored attestations are immutable and permanent.
+- Externally attested records are immutable and permanent.
 - Organizations MAY configure longer local retention periods.
 - Evidence records MUST NOT be modified after creation. Corrections are recorded as separate amendment records referencing the original evidence ID.
 
@@ -681,14 +681,14 @@ When an execution produces `outcome:unknown`:
 
 ### 11.3 Evidence Write Failures
 
-If the gateway executes an action successfully but fails to anchor the evidence on DUAL:
+If the gateway executes an action successfully but fails to anchor the evidence to the attestation backend:
 
 1. The execution is flagged as `evidence:pending`.
 2. The complete evidence payload is retained in the gateway's local durable store.
-3. A background reconciliation process retries the DUAL write with exponential backoff (initial: 5s, max: 5 minutes, max attempts: 100).
+3. A background reconciliation process retries the backend write with exponential backoff (initial: 5s, max: 5 minutes, max attempts: 100).
 4. While `evidence:pending`, the action is marked as **unattested**.
 5. Systems requiring ATP-Attested conformance MUST treat `evidence:pending` as a degraded state.
-6. If all retry attempts exhaust, the evidence transitions to `evidence:failed`. The gateway MUST alert the organization. The local evidence record remains valid but is not DUAL-anchored.
+6. If all retry attempts exhaust, the evidence transitions to `evidence:failed`. The gateway MUST alert the organization. The local evidence record remains valid but is not externally attested.
 
 ### 11.4 Approval Race Conditions
 
@@ -723,7 +723,7 @@ Revocation triggers:
 - Explicit revocation by the issuing organization.
 - Explicit revocation by an authorized role in the delegation chain.
 - Contract expiry (automatic revocation at `expiry` datetime).
-- Organization dissolution or wallet deactivation on DUAL.
+- Organization dissolution or wallet deactivation.
 
 ### 11.6 Credential Expiry Mid-Flow
 
@@ -739,7 +739,7 @@ If a credential expires after approval but before execution:
 If the primary gateway becomes unavailable:
 
 1. Agents SHOULD be configured with a failover gateway endpoint.
-2. The failover gateway MUST have access to the same contract registry, credential store, and DUAL wallet.
+2. The failover gateway MUST have access to the same contract registry, credential store, and wallet.
 3. In-flight executions on the failed gateway are treated as `outcome:unknown` and follow the unknown outcome resolution process (Section 11.2).
 4. The failover gateway MUST NOT re-execute requests that may have been dispatched by the failed primary. Idempotency keys prevent duplicate execution if the failover gateway has access to the primary's execution log.
 
@@ -758,7 +758,7 @@ ATP defines four conformance levels to support incremental adoption. Each level 
 - Surface ATP contract information to operators and monitoring systems.
 - Log ATP-related events in a structured format.
 
-**Does not require:** Policy enforcement, approval flow execution, credential brokerage, evidence anchoring on DUAL.
+**Does not require:** Policy enforcement, approval flow execution, credential brokerage, external attestation.
 
 **Use case:** Monitoring tools, dashboards, compliance reporting systems that need to understand ATP-governed execution without participating in it.
 
@@ -772,7 +772,7 @@ ATP defines four conformance levels to support incremental adoption. Each level 
 - Implement fail-closed behavior for all policy violations.
 - Produce structured execution records (Section 9.6).
 
-**Does not require:** Credential brokerage, DUAL integration, evidence anchoring, unknown outcome handling.
+**Does not require:** Credential brokerage, external attestation backend integration, evidence anchoring, unknown outcome handling.
 
 **Use case:** Development environments, internal tooling, teams evaluating ATP before full production deployment.
 
@@ -789,20 +789,20 @@ ATP defines four conformance levels to support incremental adoption. Each level 
 - Implement revocation semantics (Section 11.5).
 - Pass the ATP conformance test suite (published separately).
 
-**Does not require:** DUAL network integration for identity or attestation.
+**Does not require:** External attestation backend integration for identity or attestation.
 
-**Use case:** Production gateways and platforms that want full protocol compliance without DUAL-backed attestation.
+**Use case:** Production gateways and platforms that want full protocol compliance without external attestation backend integration.
 
 ### 12.4 ATP-Attested
 
 **Requirements (in addition to ATP-Verified):**
 
-- Bind agent and principal identity to DUAL wallets (Section 14.1).
-- Bind organizational authority to DUAL organizations (Section 14.2).
-- Anchor evidence records on DUAL as attestation objects (Section 10.3).
+- Bind agent and principal identity to wallets (Section 14.1).
+- Bind organizational authority to organizations (Section 14.2).
+- Anchor evidence records with external attestation backend (Section 10.3).
 - Support attestation verification by third parties (Section 10.4).
-- Implement DUAL object lifecycle for governed state (Section 14.3).
-- Implement gateway failover with DUAL-backed execution log (Section 11.7).
+- Implement object lifecycle for governed state (Section 14.3).
+- Implement gateway failover with externally attested execution log (Section 11.7).
 
 **Use case:** Regulated environments, high-trust enterprise deployments, cross-organization workflows, and any deployment where durable, independently verifiable evidence is required.
 
@@ -817,7 +817,7 @@ Implementations declare their conformance level in gateway metadata:
   "conformance_level": "verified",
   "conformance_suite_version": "1.0.0",
   "conformance_verified_at": "2026-04-12",
-  "dual_integration": false
+  "external_attestation": false
 }
 ```
 
@@ -835,7 +835,7 @@ ATP's threat model assumes:
 
 - Agents are untrusted. They may attempt to exceed their authority, reuse approvals, exfiltrate credentials, or misrepresent their identity.
 - The gateway is a trusted component within the organization's security boundary.
-- The DUAL network provides cryptographic integrity guarantees for identity, state, and attestation.
+- The external attestation backend provides cryptographic integrity guarantees for identity, state, and attestation.
 - Downstream tools may behave unpredictably (timeouts, partial failures, ambiguous responses).
 - The network between agent and gateway, and between gateway and downstream tools, is potentially hostile.
 
@@ -849,13 +849,13 @@ ATP's threat model assumes:
 | T4 | **Credential exfiltration.** Agent attempts to capture or persist credentials. | Credentials never transit the agent. The gateway injects credentials directly into downstream calls. |
 | T5 | **Credential scope escalation.** Gateway injects a credential with broader scope than authorized. | Contract declares maximum scope. Gateway enforces scope constraint before injection. |
 | T6 | **Contract tampering.** Agent modifies a contract to weaken constraints. | Contracts are registered and hash-verified. The gateway evaluates the registered version, not the agent's copy. |
-| T7 | **Evidence tampering.** Post-execution modification of evidence records. | Evidence is hash-signed by the gateway wallet and anchored on DUAL. Any modification invalidates the hash chain. |
+| T7 | **Evidence tampering.** Post-execution modification of evidence records. | Evidence is hash-signed by the gateway wallet and attested to external backend. Any modification invalidates the hash chain. |
 | T8 | **Denial-of-service via approval flooding.** Agent submits excessive approval requests. | Rate limiting at contract and organization level (Section 6.2). |
 | T9 | **Time-of-check-to-time-of-use (TOCTOU).** Conditions change between policy check and execution. | Credential resolution and injection happen atomically within the gateway. Revocation checks are performed immediately before dispatch. |
 | T10 | **Stale delegation.** Agent operates under revoked authority. | Revocation propagates immediately. Authority checks query live state, not cached grants. |
-| T11 | **Cross-org impersonation.** Agent claims membership in a different organization. | Wallet-to-org binding is verified on DUAL. Federation requires explicit agreements. |
-| T12 | **Gateway impersonation.** Malicious endpoint pretends to be an ATP gateway. | Gateways authenticate via DUAL wallet signatures. Agents verify gateway identity before submitting requests. |
-| T13 | **Evidence suppression.** Gateway fails to record evidence for sensitive actions. | Evidence write failures trigger `evidence:pending` with mandatory retry. Persistent failures alert the organization. ATP-Attested conformance requires DUAL anchoring. |
+| T11 | **Cross-org impersonation.** Agent claims membership in a different organization. | Wallet-to-org binding is verified with attestation backend. Federation requires explicit agreements. |
+| T12 | **Gateway impersonation.** Malicious endpoint pretends to be an ATP gateway. | Gateways authenticate via wallet signatures. Agents verify gateway identity before submitting requests. |
+| T13 | **Evidence suppression.** Gateway fails to record evidence for sensitive actions. | Evidence write failures trigger `evidence:pending` with mandatory retry. Persistent failures alert the organization. ATP-Attested conformance requires external attestation. |
 | T14 | **Side-channel via scope parameters.** Agent encodes unauthorized instructions in scope fields. | Scope parameters are validated against declared constraint types. Free-text fields are prohibited in high-trust contracts. |
 | T15 | **Prompt injection via ingested content.** Malicious content in tool responses influences agent behavior. | ATP governs the action, not the agent's reasoning. However, evidence records capture the full request/response context for post-hoc analysis. |
 
@@ -874,51 +874,51 @@ ATP's threat model assumes:
 
 - All communication between agent and gateway MUST use TLS 1.2 or higher.
 - All communication between gateway and downstream tools MUST use TLS 1.2 or higher.
-- All communication between gateway and DUAL MUST use TLS 1.2 or higher.
-- Gateway endpoints MUST require authentication (wallet signature or API key bound to a DUAL wallet).
+- All communication between gateway and attestation backend MUST use TLS 1.2 or higher.
+- Gateway endpoints MUST require authentication (wallet signature or API key bound to a wallet).
 - Agents MUST verify gateway TLS certificates.
 
 ---
 
-## 14. DUAL Network Integration
+## 14. External Attestation Backend
 
-ATP is designed to run natively on the DUAL network. This section specifies how ATP primitives map to DUAL constructs and how the integration operates.
+ATP is designed to work with pluggable external attestation backends. This section specifies how ATP primitives integrate with attestation infrastructure.
 
 ### 14.1 Wallet Authentication
 
-Every ATP participant (agent, principal, gateway, approver) is identified by a DUAL wallet.
+Every ATP participant (agent, principal, gateway, approver) is identified by a wallet.
 
 **Wallet binding:**
-- Agents register a DUAL wallet during onboarding. The wallet's SECP256K1 keypair provides cryptographic identity.
+- Agents register a wallet during onboarding. The wallet's SECP256K1 keypair provides cryptographic identity.
 - Every ATP request is signed by the requesting wallet. The gateway verifies the signature before processing.
-- Wallet-to-organization binding is recorded on DUAL. The gateway queries DUAL to verify membership.
+- Wallet-to-organization binding is recorded in the attestation backend. The gateway queries the backend to verify membership.
 
 **Authentication flow:**
 1. Agent signs the execution request with its wallet private key.
-2. Gateway verifies the signature against the wallet's public key (retrieved from DUAL).
+2. Gateway verifies the signature against the wallet's public key (retrieved from attestation backend).
 3. Gateway verifies the wallet is bound to the organization declared in the contract.
 4. If verification fails, the request is denied with `wallet_not_bound` or `signature_invalid`.
 
 ### 14.2 Organization Mapping
 
-ATP organizations map directly to DUAL organizations:
+ATP organizations map to attestation backend organization constructs:
 
-| ATP concept | DUAL primitive | Notes |
-|-------------|---------------|-------|
-| Organization | DUAL Organization | Authority boundary, role definitions, policy registry |
-| Role | DUAL Organization Role | Permissions and authority grants |
-| Member | DUAL Organization Member | Wallet-to-role binding |
-| Federation | DUAL Object (agreement type) | Cross-org trust relationship |
+| ATP concept | Backend Mapping | Notes |
+|-------------|-----------------|-------|
+| Organization | Organization | Authority boundary, role definitions, policy registry |
+| Role | Organization Role | Permissions and authority grants |
+| Member | Organization Member | Wallet-to-role binding |
+| Federation | Attestation Record (agreement type) | Cross-org trust relationship |
 
 Organization operations:
-- **Create:** A DUAL organization is created with roles and authority grants mapped to ATP contracts.
-- **Query:** The gateway queries DUAL for organization membership, role bindings, and authority grants.
-- **Update:** Role and authority changes on DUAL propagate immediately to ATP policy evaluation.
-- **Dissolve:** Organization dissolution on DUAL triggers revocation of all associated ATP contracts.
+- **Create:** An organization is created with roles and authority grants mapped to ATP contracts.
+- **Query:** The gateway queries the backend for organization membership, role bindings, and authority grants.
+- **Update:** Role and authority changes propagate immediately to ATP policy evaluation.
+- **Dissolve:** Organization dissolution triggers revocation of all associated ATP contracts.
 
 ### 14.3 Object Lifecycle
 
-ATP-governed actions that create or modify business state produce DUAL objects:
+ATP-governed actions that create or modify business state produce attested objects:
 
 ```
 Contract declares:
@@ -926,7 +926,7 @@ Contract declares:
   output.initial_state = "sent"
 
 Execution produces:
-  DUAL Object {
+  Attested Object {
     type: "procurement_communication",
     state: "sent",
     created_by: {wallet, org, action, contract},
@@ -936,40 +936,40 @@ Execution produces:
 
 **State transitions:**
 1. The contract's `output` field declares the expected object type and initial state.
-2. On successful execution, the gateway creates or transitions a DUAL object to the declared state.
+2. On successful execution, the gateway creates or transitions an attested object to the declared state.
 3. The object's provenance chain links to the ATP execution and evidence records.
 4. Subsequent ATP-governed actions on the same object extend the provenance chain.
-5. The full object lifecycle (creation, state transitions, final state) is immutably recorded on DUAL.
+5. The full object lifecycle (creation, state transitions, final state) is immutably recorded with the attestation backend.
 
 ### 14.4 Action Recording
 
-Every ATP-governed execution maps to a DUAL action:
+Every ATP-governed execution is recorded with the attestation backend:
 
 - The action type corresponds to the contract's `actions` field.
 - The action is recorded with the requesting wallet, organization, and contract reference.
 - The action's provenance includes the execution ID, evidence ID, and outcome.
-- DUAL's action recording provides an independent, immutable log of what agents did, complementing the gateway's evidence records.
+- The attestation backend's action recording provides an independent, immutable log of what agents did, complementing the gateway's evidence records.
 
 ### 14.5 Attestation API
 
-The gateway interfaces with DUAL's attestation layer through the following operations:
+The gateway interfaces with the attestation backend through the following operations:
 
-| Operation | DUAL API | Description |
-|-----------|----------|-------------|
-| Anchor evidence | `POST /objects` (attestation type) | Create an attestation object with the evidence hash and gateway signature |
-| Verify attestation | `GET /objects/{id}` | Retrieve the attestation object and verify its provenance |
-| Query by execution | `GET /objects?filter=execution_id:{id}` | Find attestations for a specific execution |
-| Query by contract | `GET /objects?filter=contract_id:{id}` | Find all attestations under a contract |
-| Query by wallet | `GET /objects?filter=wallet:{addr}` | Find all attestations involving a wallet |
-| Query by org | `GET /objects?filter=org_id:{id}` | Find all attestations within an organization |
+| Operation | Backend API | Description |
+|-----------|-----------|-------------|
+| Anchor evidence | `POST /attestations` | Create an attestation record with the evidence hash and gateway signature |
+| Verify attestation | `GET /attestations/{id}` | Retrieve the attestation record and verify its provenance |
+| Query by execution | `GET /attestations?filter=execution_id:{id}` | Find attestations for a specific execution |
+| Query by contract | `GET /attestations?filter=contract_id:{id}` | Find all attestations under a contract |
+| Query by wallet | `GET /attestations?filter=wallet:{addr}` | Find all attestations involving a wallet |
+| Query by org | `GET /attestations?filter=org_id:{id}` | Find all attestations within an organization |
 
 ### 14.6 Network Requirements
 
 For ATP-Attested conformance:
 
-- The gateway MUST maintain an active DUAL wallet with sufficient balance for attestation actions.
-- The gateway MUST have network connectivity to a DUAL node (direct or via DUAL API).
-- The gateway MUST handle DUAL network unavailability gracefully via the evidence write failure process (Section 11.3).
+- The gateway MUST maintain an active wallet with sufficient credentials for attestation actions.
+- The gateway MUST have network connectivity to an attestation backend (direct or via attestation API).
+- The gateway MUST handle attestation backend unavailability gracefully via the evidence write failure process (Section 11.3).
 - The gateway SHOULD maintain a local cache of organization and wallet data with a maximum staleness of 60 seconds.
 
 ---
@@ -989,7 +989,7 @@ For ATP-Attested conformance:
 - [x] Section 11: Operational Semantics
 - [x] Section 12: Conformance Levels
 - [x] Section 13: Security Considerations
-- [x] Section 14: DUAL Network Integration
+- [x] Section 14: External Attestation Backend
 - [ ] Appendix A: Full Evidence Record Example
 - [ ] Appendix B: Conformance Test Suite Reference
 - [ ] Appendix C: Migration Guide (pre-ATP to ATP-Aware)
@@ -998,4 +998,3 @@ For ATP-Attested conformance:
 
 - [ATP Contract Schema](schemas/atp-contract.schema.json)
 - [ATP Positioning Document](../docs/POSITIONING.md)
-- [DUAL Network](https://dual.network)

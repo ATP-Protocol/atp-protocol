@@ -40,11 +40,11 @@ Evidence capture, deterministic idempotency, and outcome classification. This le
 - Evidence write failure handling
 
 ### Level 4: Attested
-DUAL network integration and evidence anchoring. The highest level enables independently verifiable, on-chain evidence.
+External attestation backend integration and evidence anchoring. The highest level enables independently verifiable, externally anchored evidence.
 
-- Evidence anchoring to DUAL network
+- Evidence anchoring to external attestation backend
 - Cross-organization verification
-- On-chain attestation objects
+- External attestation objects
 
 ## Installation
 

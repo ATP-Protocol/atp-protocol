@@ -60,7 +60,7 @@ Verify complex scenarios and edge cases.
 - Cross-organization federation
 - Rate limiting and quota enforcement
 - Escalation and manual override
-- Blockchain anchoring
+- External attestation
 - Disaster recovery (database failure, gateway restart)
 
 **Estimated Time:** 10-20 hours
@@ -70,7 +70,7 @@ Verify complex scenarios and edge cases.
 - Org A delegates to Org B, verify B can execute A's actions within scoped constraints
 - Set rate limit to 5 per hour, verify 6th execution is rejected
 - Propose action with no matching contract, verify escalated to human review
-- Anchor evidence to blockchain, verify hash is in transaction
+- Attest evidence to external backend, verify anchor recorded
 - Kill database, restart gateway, verify audit log is consistent
 
 ### Level 4: Certified
@@ -134,7 +134,7 @@ tests/
 │   ├── federation.test.ts
 │   ├── rate-limiting.test.ts
 │   ├── escalation.test.ts
-│   ├── blockchain.test.ts
+│   ├── attestation.test.ts
 │   └── recovery.test.ts
 └── certified/
     ├── cryptography.test.ts
@@ -252,7 +252,7 @@ The test suite covers:
 | Authority model | Chains up to 5 levels deep |
 | Credential injection | All 5 methods |
 | Evidence generation | All 18 fields + signatures |
-| Blockchain anchoring | Ethereum, Solana |
+| External attestation | S3 Glacier, managed services |
 | Error handling | 50+ error scenarios |
 | Concurrency | 100+ concurrent operations |
 | Performance | Latency, throughput, memory |
@@ -310,17 +310,17 @@ Performance tests assume:
 
 If hardware is limited, adjust expectations or run on larger instance.
 
-### Blockchain Tests
+### Attestation Backend Tests
 
-Blockchain tests require:
-- Infura API key (or own Ethereum node)
-- Sufficient ETH for gas
-- Test on goerli testnet (not mainnet)
+Attestation backend tests require:
+- Configured attestation backend (staging)
+- Proper API credentials for backend access
+- Test environment (not production)
 
 Set environment:
 ```bash
-export BLOCKCHAIN_RPC=https://goerli.infura.io/v3/YOUR-KEY
-export BLOCKCHAIN_TEST_MODE=true
+export ATTESTATION_BACKEND_URL=https://staging-attestation.example.com
+export ATTESTATION_API_KEY=your-test-key
 ```
 
 ## Next Steps

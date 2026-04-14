@@ -17,7 +17,7 @@ The gateway is a service that:
 5. **Executes actions** on target systems
 6. **Generates evidence** of execution
 7. **Records audit trails** in an append-only log
-8. **Anchors proof** to blockchain (optional)
+8. **Attests evidence** to external backend (optional)
 
 It sits between your agents and your systems, acting as a trust and accountability layer.
 
@@ -53,7 +53,7 @@ It sits between your agents and your systems, acting as a trust and accountabili
 │  │ 7. Evidence Generation       ││
 │  └──────────────────────────────┘│
 │  ┌──────────────────────────────┐│
-│  │ 8. Blockchain Anchoring      ││
+│  │ 8. External Attestation      ││
 │  └──────────────────────────────┘│
 └──────────────────────────────────┘
        │
@@ -62,7 +62,7 @@ It sits between your agents and your systems, acting as a trust and accountabili
        ├─► Contract Store
        ├─► Approval Service
        ├─► Target Systems (APIs, databases, etc.)
-       └─► Blockchain (optional)
+       └─► Attestation Backend (optional)
 ```
 
 ## 8-Step Execution Pipeline
@@ -128,11 +128,11 @@ It sits between your agents and your systems, acting as a trust and accountabili
 **Output:** Signed evidence
 **On failure:** Still record partial evidence
 
-### Step 8: Blockchain Anchoring
+### Step 8: External Attestation
 
 **Input:** Signed evidence
-**Process:** (Optional) Submit evidence hash to blockchain
-**Output:** Blockchain transaction hash
+**Process:** (Optional) Submit evidence to external attestation backend
+**Output:** Attestation anchor ID
 **On failure:** Log failure but don't fail action
 
 ## Deployment Models
@@ -198,7 +198,7 @@ audit_log:
 | Credential injection | 10-100ms | 1000+ req/sec |
 | Action execution | 100ms-5sec | (target-dependent) |
 | Evidence generation | 10-50ms | 1000+ req/sec |
-| Blockchain anchor | 10-30sec | 100+ tx/sec |
+| External attestation | 10-30sec | 100+ req/sec |
 
 ## Observability
 
@@ -215,7 +215,7 @@ atp_approval_wait_time (histogram)
 atp_evidence_generation_time (histogram)
 atp_contract_lookup_time (histogram)
 atp_credential_injection_time (histogram)
-atp_blockchain_anchor_time (histogram)
+atp_attestation_time (histogram)
 atp_audit_log_writes (counter)
 atp_gateway_errors (counter)
 ```
@@ -269,11 +269,10 @@ approval_service:
   notification_method: email
   email_provider: sendgrid
   
-blockchain:
+attestation:
   enabled: true
-  chain: ethereum
-  rpc_url: https://mainnet.infura.io/v3/...
-  contract_address: 0x...
+  backend: s3-immutable-ledger
+  backend_url: https://attestation.example.com
   
 audit_log:
   backend: postgres

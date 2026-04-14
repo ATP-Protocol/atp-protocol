@@ -54,10 +54,10 @@ NODE_ENV=production                     # or development, staging
 CREDENTIAL_BROKER_URL=http://localhost:8081
 APPROVAL_NOTIFIER=email
 APPROVAL_EMAIL_FROM=noreply@atp.example.com
-BLOCKCHAIN_ENABLED=true
-BLOCKCHAIN_CHAIN=ethereum
-BLOCKCHAIN_RPC=https://mainnet.infura.io/v3/...
-BLOCKCHAIN_CONTRACT_ADDRESS=0x...
+ATTESTATION_ENABLED=true
+ATTESTATION_BACKEND=s3-immutable-ledger
+ATTESTATION_BACKEND_URL=https://attestation.example.com
+ATTESTATION_API_KEY=your-api-key
 ```
 
 ### Config File (YAML)
@@ -88,12 +88,11 @@ approval_service:
   api_key: [REDACTED]
   timeout_seconds: 3600
   
-blockchain:
+attestation:
   enabled: true
-  chain: ethereum
-  rpc_url: https://mainnet.infura.io/v3/...
-  contract_address: 0x...
-  gas_limit: 50000
+  backend: s3-immutable-ledger
+  backend_url: https://attestation.example.com
+  api_key: [REDACTED]
   
 audit_log:
   backend: postgres
@@ -252,13 +251,15 @@ spec:
           value: "8080"
         - name: LOG_LEVEL
           value: "info"
-        - name: BLOCKCHAIN_ENABLED
+        - name: ATTESTATION_ENABLED
           value: "true"
-        - name: BLOCKCHAIN_RPC
+        - name: ATTESTATION_BACKEND
+          value: "s3-immutable-ledger"
+        - name: ATTESTATION_BACKEND_URL
           valueFrom:
             secretKeyRef:
-              name: blockchain-credentials
-              key: RPC_URL
+              name: attestation-credentials
+              key: BACKEND_URL
         resources:
           requests:
             cpu: 500m
@@ -385,7 +386,7 @@ CREATE TABLE evidence (
   outcome VARCHAR(50) NOT NULL,
   result_hash VARCHAR(64),
   signature TEXT NOT NULL,
-  blockchain_tx VARCHAR(255),
+  attestation_anchor VARCHAR(255),
   created_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
@@ -466,7 +467,7 @@ Configure alerts for:
 - Approval timeout spikes
 - Policy rejection spikes
 - Execution failure spikes
-- Blockchain anchor failures
+- External attestation failures
 
 Example Prometheus alert:
 

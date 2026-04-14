@@ -19,7 +19,7 @@ The ATP specification is organized into 14 sections that define the complete pro
 | 7 | **Approval State Machine** | States (Proposed, Approved, Executing, Attested, Settled), transitions, escalation paths, and rejection handling |
 | 8 | **Credential Brokerage** | Credential broker architecture, 5 injection methods, fail-closed enforcement, and key rotation |
 | 9 | **Execution Semantics** | Action execution, mediation model, outcome types, and idempotency guarantees |
-| 10 | **Evidence & Attestation** | Evidence schema (18 fields), signing, audit trails, and blockchain anchoring |
+| 10 | **Evidence & Attestation** | Evidence schema (18 fields), signing, audit trails, and external attestation |
 | 11 | **Cryptography & Signing** | Key types, signature schemes, wallet architecture, and signature verification |
 | 12 | **API Surface** | HTTP/gRPC endpoints, message formats, error handling, and versioning |
 | 13 | **Conformance & Testing** | 4 conformance levels, test suites, certification criteria, and reference implementations |

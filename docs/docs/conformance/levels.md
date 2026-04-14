@@ -280,14 +280,14 @@ describe('Level 2: Standard', () => {
 - [x] Track escalation resolution time
 - [x] Alert if escalated action expires
 
-#### 3.4 Blockchain Anchoring
-- [x] Anchor evidence hash to blockchain
-- [x] Support Ethereum (goerli testnet)
-- [x] Support Solana (devnet)
-- [x] Record transaction hash in evidence
-- [x] Record block number in evidence
-- [x] Verify anchored evidence on-chain
-- [x] Handle blockchain failures gracefully
+#### 3.4 External Attestation
+- [x] Submit evidence to external attestation backend
+- [x] Support S3 Glacier / Azure Archive
+- [x] Support managed attestation services
+- [x] Record attestation anchor ID in evidence
+- [x] Record anchor timestamp in evidence
+- [x] Verify attested evidence with backend
+- [x] Handle attestation failures gracefully
 
 #### 3.5 Disaster Recovery
 - [x] Survive database restart (no data loss)
@@ -306,7 +306,7 @@ All tests pass:
 - P99 latency < 2000ms
 - Throughput > 300 req/sec
 - Error rate < 0.001%
-- Blockchain anchoring success rate > 99.9%
+- External attestation success rate > 99.9%
 
 ## Level 4: Certified
 

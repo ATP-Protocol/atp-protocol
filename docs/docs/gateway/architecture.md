@@ -62,7 +62,7 @@ This page describes the internal architecture of the ATP gateway: its components
          └────────┬─────────┘
                   ▼
         ┌──────────────────────┐
-        │ Blockchain Anchor    │
+        │ External Attestation │
         │ (optional)           │
         └──────────────────────┘
 ```
@@ -230,27 +230,28 @@ CREATE TABLE evidence (
   outcome VARCHAR(50),
   result_hash VARCHAR(64),
   signature TEXT,
-  blockchain_tx TEXT,
+  attestation_anchor TEXT,
   created_at TIMESTAMP
 );
 ```
 
-### Blockchain Anchor
+### External Attestation
 
-(Optional) Anchors evidence to blockchain:
+(Optional) Attests evidence to external backend:
 
 1. Serialize evidence to JSON
 2. Compute hash (SHA256)
-3. Call smart contract or RPC endpoint
-4. Submit transaction
-5. Wait for finalization
-6. Record tx hash in evidence
+3. Call attestation backend API
+4. Submit evidence and hash
+5. Wait for attestation confirmation
+6. Record attestation anchor ID in evidence
 
 Supports:
-- Ethereum (via Infura)
-- Polygon
-- Solana
-- Other EVM-compatible chains
+- Pluggable attestation backends
+- S3 Glacier / immutable cloud storage
+- Managed attestation services
+- Internal append-only audit logs
+
 
 ## Data Flow: Complete Example
 
@@ -300,10 +301,10 @@ Agent proposes: DELETE user 12345
    - Signs with gateway key
    → Evidence stored in evidence table
 
-9. BlockchainAnchor (optional):
-   - Submits evidence hash to Ethereum
-   - Gets tx hash: 0xabc123...
-   - Waits for block finalization
+9. External Attestation (optional):
+   - Submits evidence to attestation backend
+   - Gets anchor ID: anchor-xyz123
+   - Waits for attestation confirmation
    → Anchor recorded in evidence
 
 10. Return to agent: status=attested, outcome=success
@@ -337,10 +338,10 @@ Agent proposes: DELETE user 12345
 - Signing key unavailable → Alert operators, retry
 - Still record partial evidence
 
-### Failures in Blockchain Anchor
-- Network down → Retry with exponential backoff
-- Gas too low → Retry with higher gas
-- Transaction fails → Log failure, don't fail action
+### Failures in External Attestation
+- Backend down → Retry with exponential backoff
+- Attestation rate limit → Retry with backoff
+- Attestation fails → Log failure, don't fail action
 
 ## Performance Optimizations
 
@@ -369,7 +370,7 @@ Agent proposes: DELETE user 12345
 - **Policy evaluation:** Sync (fast path)
 - **Approval notifications:** Async (fire and forget)
 - **Evidence generation:** Sync but non-blocking
-- **Blockchain anchor:** Async (background job)
+- **External attestation:** Async (background job)
 
 ## Monitoring
 

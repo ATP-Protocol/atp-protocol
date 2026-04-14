@@ -131,10 +131,9 @@ Create `test-config.json`:
     "url": "postgres://user:pass@localhost:5432/atp_test",
     "reset_between_tests": true
   },
-  "blockchain": {
+  "attestation": {
     "enabled": true,
-    "chain": "ethereum",
-    "testnet": true
+    "backend": "s3-immutable-ledger"
   }
 }
 ```
@@ -147,7 +146,7 @@ export ATP_ORG=com.test
 export ATP_TIMEOUT_MS=30000
 export ATP_LOG_LEVEL=info
 export ATP_DB_URL=postgres://user:pass@localhost/atp_test
-export ATP_BLOCKCHAIN_TESTNET=true
+export ATP_ATTESTATION_BACKEND=s3-immutable-ledger
 ```
 
 ## Writing Custom Tests

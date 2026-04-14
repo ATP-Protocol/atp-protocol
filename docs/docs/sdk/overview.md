@@ -104,9 +104,9 @@ const atp = new ATP({
   walletPrivateKey: process.env.AGENT_WALLET_KEY,
   organization: 'com.acme',
   credentialsBrokerUrl: 'http://localhost:8081',
-  evidenceAnchoring: {
+  evidenceAttestation: {
     enabled: true,
-    blockchainRpc: 'https://eth.example.com'
+    backendUrl: 'https://attestation.example.com'
   }
 });
 ```
@@ -201,8 +201,8 @@ const evidence = await atp.evidence.generate({
 // Record in audit log
 await atp.evidence.record(evidence);
 
-// Anchor to blockchain
-const anchored = await atp.blockchain.anchor(evidence);
+// Attest to external backend
+const attested = await atp.attestation.anchor(evidence);
 
 // Query audit trail
 const logs = await atp.audit.query({

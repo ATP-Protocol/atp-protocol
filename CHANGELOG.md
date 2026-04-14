@@ -12,7 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and this 
 
 ## [0.1.0] - 2026-04-12 — Initial Public Release
 
-This release provides a complete reference implementation of the ATP specification (v1.0.0-draft.2), including the TypeScript gateway, SDK, conformance test suite, and DUAL network integration.
+This release provides a complete reference implementation of the ATP specification (v1.0.0-draft.2), including the TypeScript gateway, SDK, conformance test suite, and pluggable attestation backend integration.
 
 ### Specification (v1.0.0-draft.2)
 
@@ -26,7 +26,7 @@ This release provides a complete reference implementation of the ATP specificati
 - **Section 11:** Operational Semantics — idempotency, error handling, evidence retry logic
 - **Section 12:** Conformance Levels — Aware, Compatible, Verified, Attested certification framework
 - **Section 13:** Security Considerations — 15 threat classes, enforcement boundaries, transport requirements
-- **Section 14:** DUAL Network Integration — wallet authentication, org mapping, object lifecycle, attestation API
+- **Section 14:** External Attestation Integration — wallet authentication, org mapping, object lifecycle, attestation API
 
 **Key features:**
 - Immutable contract registration and execution mediation
@@ -34,7 +34,7 @@ This release provides a complete reference implementation of the ATP specificati
 - Type-safe constraint evaluation (enum, numeric, boolean, prohibit-list)
 - Approval workflow with single-use nonces and cryptographic binding
 - Credential injection without exposing secrets to agents
-- Comprehensive evidence capture with DUAL attestation
+- Comprehensive evidence capture with external attestation anchoring
 - Gateway-enforced idempotency with optional single-use keys
 - Three conformance levels: Verified (prod), Compatible (sandbox), Aware (dev)
 
@@ -51,7 +51,7 @@ This release provides a complete reference implementation of the ATP specificati
 - Approval flow state machine (9 states, deterministic transitions)
 - Credential resolver with provider-agnostic injection
 - Evidence capture with request/response hashing
-- DUAL integration module for wallet verification and evidence anchoring
+- External attestation backend integration module for identity verification and evidence anchoring
 - Built-in support for OAuth, Bearer, Basic Auth, API Key, and custom credential types
 - Execution timeout enforcement with configurable limits
 - Idempotency tracking per contract configuration
@@ -63,17 +63,17 @@ This release provides a complete reference implementation of the ATP specificati
 - `middleware/credentials.ts` (95 lines): Credential resolution and injection
 - `middleware/evidence.ts` (73 lines): Evidence capture and hashing
 - `middleware/policy.ts` (126 lines): Scope constraint evaluation
-- `middleware/anchor.ts` (105 lines): DUAL evidence anchoring with retry logic
+- `middleware/anchor.ts` (105 lines): External attestation anchoring with retry logic
 - `store/` (interfaces): Contract, authority, credential, evidence, approval, idempotency stores
-- `dual/` (client and types): DUAL wallet, attestation, org verification
+- `attestation/` (client and types): Attestation backend wallet, org verification
 
-**Conformance:** Verified (local evidence, DUAL identity integration)
+**Conformance:** Verified (local evidence, external identity integration)
 
 **Limitations:**
 - In-memory storage (reference only; production must use persistent vault)
 - No rate limiting enforcement (application responsibility)
 - Single-process approval state machine (multi-gateway requires distributed locking)
-- DUAL cache staleness up to 60 seconds (operator configurable)
+- Attestation backend cache staleness up to 60 seconds (operator configurable)
 
 ### TypeScript SDK
 
@@ -144,7 +144,7 @@ This release provides a complete reference implementation of the ATP specificati
 **Coverage:**
 - Happy path: Contract execution with all stages passing
 - Denial paths: Authority denial, policy denial, credential denial, approval denial
-- Edge cases: Timeout, idempotency, concurrent approvals, DUAL unavailability
+- Edge cases: Timeout, idempotency, concurrent approvals, attestation backend unavailability
 - Security: Threat model verification, no false negatives
 
 ### Documentation
@@ -156,7 +156,7 @@ This release provides a complete reference implementation of the ATP specificati
 - `CODE_OF_CONDUCT.md`: Community guidelines
 
 **Specification:**
-- `spec/ATP-SPEC-v1.md` (1002 lines): Complete specification with sections 1-14, full threat model, DUAL integration, conformance framework
+- `spec/ATP-SPEC-v1.md` (1002 lines): Complete specification with sections 1-14, full threat model, external attestation integration, conformance framework
 - `spec/schemas/atp-contract.schema.json`: JSON Schema for contract validation
 - `spec/rfcs/0000-template.md`: RFC process template
 
@@ -166,7 +166,7 @@ This release provides a complete reference implementation of the ATP specificati
 - `examples/typescript-gateway.ts`: Complete gateway setup with contract registration
 - `examples/typescript-agent.ts`: Agent submitting governed execution request
 - `examples/approval-workflow.ts`: Full approval flow (submit → deliver → approve → execute)
-- `examples/dual-integration.ts`: Gateway with DUAL wallet verification and evidence anchoring
+- `examples/attestation-integration.ts`: Gateway with external attestation backend identity verification and evidence anchoring
 - `examples/policy-constraints.ts`: Defining and evaluating policy constraints
 - `examples/error-handling.ts`: Handling denial paths, timeouts, and credential failures
 
@@ -187,9 +187,9 @@ None (initial release).
 
 ### Known Issues
 
-- Evidence write failures on DUAL unavailability (evidence marked "pending", requires retry)
+- Evidence write failures on attestation backend unavailability (evidence marked "pending", requires retry)
 - In-memory storage not suitable for production (operator must implement persistence)
-- DUAL cache staleness up to 60 seconds (may delay revocation propagation)
+- Attestation backend cache staleness up to 60 seconds (may delay revocation propagation)
 - No built-in rate limiting enforcement (operator responsibility)
 - Single-process approval state machine (multi-gateway deployments need distributed locking)
 
@@ -213,7 +213,7 @@ See `SECURITY.md` Section 4 for complete known limitations and mitigation strate
 - Go reference gateway implementation
 
 **Spec updates:**
-- Appendix A: Full evidence record example with DUAL attestation
+- Appendix A: Full evidence record example with external attestation
 - Appendix B: Complete conformance test suite reference
 - Appendix C: Migration guide for pre-ATP agents
 
@@ -228,7 +228,7 @@ See `SECURITY.md` Section 4 for complete known limitations and mitigation strate
 - **Approval:** Human (or designated agent) sign-off on a specific execution before it proceeds
 - **Credential:** Secret (API key, OAuth token, etc.) injected by gateway into downstream tool call
 - **Evidence:** Record of what happened (request, response, outcome, timestamps, who authorized it)
-- **DUAL:** Blockchain-like network providing decentralized identity, org membership, and immutable attestation
+- **External Attestation Backend:** Service providing identity verification, org membership management, and immutable attestation
 - **Conformance:** Level of assurance (Aware/Compatible/Verified/Attested) a gateway declares
 - **Nonce:** Single-use random value binding an approval to a specific action (prevents replay)
 

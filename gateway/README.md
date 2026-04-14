@@ -1,6 +1,6 @@
 # @atp-protocol/gateway
 
-Reference ATP gateway — governed execution middleware for MCP tools on [DUAL](https://dual.network).
+Reference ATP gateway — governed execution middleware for MCP tools with pluggable attestation backends.
 
 This is the reference implementation of the ATP gateway as specified in the [ATP Protocol Specification](../spec/ATP-SPEC-v1.md).
 

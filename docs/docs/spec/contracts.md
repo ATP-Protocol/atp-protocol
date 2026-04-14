@@ -205,10 +205,10 @@ Specifies how evidence of action execution is collected, signed, and stored.
     "outcome"
   ],
   "audit_log_endpoint": "https://audit.acme.com/api/v1/events",
-  "blockchain_anchor": {
+  "attestation": {
     "enabled": true,
-    "network": "ethereum",
-    "contract_address": "0x..."
+    "backend": "s3-immutable-ledger",
+    "backend_url": "https://attestation.example.com"
   }
 }
 ```

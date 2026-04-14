@@ -279,7 +279,7 @@ This reference implementation is suitable for testing and learning. For producti
 
 1. **Persist State** — Replace in-memory stores with a database
 2. **Secure Credentials** — Integrate with a secrets vault (HashiCorp Vault, AWS Secrets Manager)
-3. **DUAL Integration** — Enable DUAL network for wallet verification and evidence anchoring
+3. **Attestation Backend Integration** — Enable external attestation backend for identity verification and evidence anchoring
 4. **Audit Logging** — Forward evidence records to SIEM/compliance systems
 5. **Rate Limiting** — Add rate limits per wallet/org/action
 6. **Real Handlers** — Replace echo handlers with actual tool implementations

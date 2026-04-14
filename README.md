@@ -1,8 +1,8 @@
-# ATP: The Open Governance Protocol for Agent Execution on DUAL
+# ATP: The Open Governance Protocol for AI Agent Execution
 
 **Govern the action. Prove it happened.**
 
-ATP is the open governance protocol for AI agent execution, designed to run natively on [DUAL](https://dual.network) for authority, identity, evidence, and attestation.
+ATP is the open governance protocol for AI agent execution, designed for pluggable evidence backends and external attestation.
 
 It gives developers and enterprises a standard way to govern how agents request authority, access tools, use credentials, obtain approvals, execute actions, and produce verifiable evidence of what happened.
 
@@ -38,7 +38,7 @@ Agent → MCP tool call
          ↓
        Evidence captured
          ↓
-       Attestation recorded (on DUAL)
+       Attestation recorded (via pluggable backend)
          ↓
        Result returned to agent
 ```
@@ -74,11 +74,11 @@ The full protocol specification is available at [`spec/ATP-SPEC-v1.md`](spec/ATP
 | 7 | Approval State Machine — 9 states, cryptographic binding, escalation |
 | 8 | Credential Brokerage — broker model, scope constraints, fail-closed |
 | 9 | Execution Semantics — 6 outcome types, mediation model, side-effect handling |
-| 10 | Evidence and Attestation — evidence schema, DUAL anchoring, verification |
+| 10 | Evidence and Attestation — evidence schema, external attestation, verification |
 | 11 | Operational Semantics — idempotency, unknown outcomes, revocation, failover |
 | 12 | Conformance Levels — Aware → Compatible → Verified → Attested |
 | 13 | Security Considerations — 15 threat classes, enforcement boundaries |
-| 14 | DUAL Network Integration — wallet auth, object lifecycle, attestation API |
+| 14 | External Attestation Integration — pluggable backend integration, attestation API |
 
 ## What's in this repo
 
@@ -126,17 +126,17 @@ ATP is designed as a layered standard. Adoption does not have to be all-or-nothi
 | **ATP-Aware** | System understands ATP contracts and governance metadata | Parse contracts, interpret metadata, structured logging |
 | **ATP-Compatible** | System evaluates ATP policies and participates in governed execution | Authority checks, policy evaluation, approval state machine, fail-closed |
 | **ATP-Verified** | System passes the published conformance suite | Credential brokerage, all outcome types, idempotency, revocation, unknown outcome handling |
-| **ATP-Attested** | System produces verifiable evidence anchored through DUAL | DUAL wallet identity, organization binding, evidence anchoring, attestation verification |
+| **ATP-Attested** | System produces verifiable evidence anchored through external attestation | Identity binding, organization binding, evidence anchoring, attestation verification |
 
-## The DUAL relationship
+## Backend flexibility
 
-ATP is the governance layer of DUAL, opened up for ecosystem adoption.
+ATP is a standalone governance protocol designed to work with any attestation backend.
 
-The protocol, SDKs, reference gateway, and conformance suite are free and open source under Apache 2.0. Developers can run ATP locally at zero cost.
+The protocol, SDKs, reference gateway, and conformance suite are free and open source under Apache 2.0. Developers can run ATP locally with file-based evidence storage at zero cost.
 
-DUAL provides the production-grade trust substrate: wallet-bound identity, organization primitives, object state, action provenance, and durable attestation. ATP reaches its intended form when running on DUAL.
+Production deployments can integrate with external attestation services (distributed ledgers, centralized audit logs, or custom attestation services) to provide wallet-bound identity, organization primitives, action provenance, and durable attestation.
 
-Open source gives ATP reach. DUAL gives ATP depth.
+Open source gives ATP reach. Pluggable backends give ATP flexibility.
 
 ## Status
 
@@ -145,7 +145,7 @@ Open source gives ATP reach. DUAL gives ATP depth.
 - [x] Full protocol specification (14 sections, v1.0.0-draft.2)
 - [x] TypeScript SDK (4 modules, 81 tests)
 - [x] Python SDK (4 modules, 116 tests)
-- [x] Reference gateway with DUAL integration (full pipeline, 43 tests)
+- [x] Reference gateway with pluggable attestation backend (full pipeline, 43 tests)
 - [x] Conformance test suite (61 fixtures, 4 levels)
 - [x] MCP server (12 governance tools for any MCP client)
 - [x] End-to-end demo (6 governed scenarios with terminal output)
@@ -170,4 +170,4 @@ The protocol specification is licensed under [CC BY 4.0](https://creativecommons
 
 ---
 
-**ATP is a project of [DUAL](https://dual.network).** Built for a world where agent actions need more than prompts and logs. They need a trust substrate.
+Built for a world where agent actions need more than prompts and logs. They need verifiable evidence and governance.

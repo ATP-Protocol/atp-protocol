@@ -187,7 +187,7 @@ When you propose an action, ATP runs through an 8-step pipeline:
 4. **Approval:** Wait for required signers to approve
 5. **Execution:** Run the action and capture the result
 6. **Evidence:** Generate signed evidence of what happened
-7. **Recording:** Store evidence in audit log and (optionally) blockchain
+7. **Recording:** Store evidence in audit log and (optionally) external attestation backend
 8. **Notification:** Notify stakeholders (agent, approvers, audit team)
 
 If any step fails, the action is rejected and logged. The agent never gets to execute without passing all gates.
@@ -203,7 +203,7 @@ ATP_WALLET_KEY=<your-agent-wallet-private-key>
 ATP_ORGANIZATION=acme-corp
 ATP_FACE_NAME=user-deletion-service-prod
 ATP_CREDENTIALS_BROKER_URL=http://localhost:8081
-ATP_EVIDENCE_ANCHOR_ENABLED=true
+ATP_EVIDENCE_ATTESTATION_ENABLED=true
 ```
 
 Or in code:
@@ -214,9 +214,9 @@ const atp = new ATP({
   walletPrivateKey: process.env.ATP_WALLET_KEY,
   organization: process.env.ATP_ORGANIZATION,
   credentialsBrokerUrl: process.env.ATP_CREDENTIALS_BROKER_URL,
-  evidenceAnchoring: {
+  evidenceAttestation: {
     enabled: true,
-    blockchainRpc: 'https://eth.example.com',
+    backendUrl: 'https://attestation.example.com',
   },
 });
 ```

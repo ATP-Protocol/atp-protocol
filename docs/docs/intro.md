@@ -10,7 +10,7 @@ The **Agent Trust Protocol (ATP)** is a foundational governance framework for co
 
 Without ATP, you face a dilemma: either lock agents into read-only roles (rendering them ineffective), or grant broad write permissions and hope they stay within guardrails (a dangerous gamble). ATP splits the difference. It lets you define *precisely* what an agent can do, *under what conditions*, *with whose approval*, and *with full evidence of what actually happened*.
 
-ATP is not a sandbox or a permission layer bolted onto your infrastructure. It's a co-designed protocol that sits at the boundary between agent intent and system action. An agent proposes an action, ATP evaluates it against a contract signed by authorized humans, and if it passes all checks, the action executes with cryptographic proof of compliance. Every step is logged, timestamped, and anchor-able to a blockchain.
+ATP is not a sandbox or a permission layer bolted onto your infrastructure. It's a co-designed protocol that sits at the boundary between agent intent and system action. An agent proposes an action, ATP evaluates it against a contract signed by authorized humans, and if it passes all checks, the action executes with cryptographic proof of compliance. Every step is logged, timestamped, and can be durably attested via an external backend.
 
 ## The 5-Layer Trust Stack
 
@@ -44,7 +44,7 @@ ATP operates within a broader trust architecture. Understanding where it sits he
 ┌─────────────────────────────────────┐
 │   Layer 5: Attestation              │
 │   (Evidence generation, audit logs, │
-│    blockchain anchoring)            │
+│    external attestation backends)   │
 └─────────────────────────────────────┘
 ```
 
@@ -118,7 +118,7 @@ An agent's public presentation—credentials, metadata, and policy enforcement r
 ┌──────────────────────────────────┐
 │  Evidence & Audit Log            │
 │  - Timestamp, signer, approval   │
-│  - Hash anchored to blockchain   │
+│  - Cryptographically signed      │
 │  - Human-readable explanation    │
 └──────────────────────────────────┘
 ```
@@ -156,7 +156,7 @@ An action flows through states:
 2. **Approved** — Required signers sign the contract
 3. **Executing** — Gateway runs the action
 4. **Attested** — Evidence is generated and signed
-5. **Settled** — Evidence is anchored to blockchain (optional)
+5. **Settled** — Evidence is durably attested via external backend (optional)
 
 An action can be escalated if it doesn't match an existing contract (human review required). It can be rejected at any step, and rejection is logged.
 

@@ -24,9 +24,9 @@ atp = ATP(
     wallet_private_key=os.getenv('AGENT_WALLET_KEY'),
     organization='com.acme',
     credentials_broker_url='http://localhost:8081',
-    evidence_anchoring={
+    evidence_attestation={
         'enabled': True,
-        'blockchain_rpc': 'https://mainnet.infura.io/v3/YOUR-PROJECT-ID'
+        'backend_url': 'https://attestation.example.com'
     }
 )
 ```
@@ -46,7 +46,7 @@ atp.authority    # AuthorityAPI
 atp.evidence     # EvidenceAPI
 atp.audit        # AuditAPI
 atp.credentials  # CredentialAPI
-atp.blockchain   # BlockchainAPI
+atp.attestation  # AttestationAPI
 atp.wallet       # Wallet instance
 ```
 
@@ -233,30 +233,28 @@ logs = atp.evidence.query(
 )
 ```
 
-### BlockchainAPI
+### AttestationAPI
 
-Anchor evidence to blockchain.
+Submit evidence to external attestation backend.
 
 ```python
-# Anchor evidence to Ethereum
-anchored = atp.blockchain.anchor(
+# Attest evidence to external backend
+attested = atp.attestation.anchor(
     evidence,
-    chain='ethereum',
-    gas_limit=50000
+    backend='s3-immutable-ledger'
 )
-# Returns: {'tx_hash': '0x...', 'block': 12345678, ...}
+# Returns: {'anchor_id': 'anchor-xyz123', 'timestamp': '...', ...}
 
-# Verify anchored evidence
-is_valid = atp.blockchain.verify(
-    chain='ethereum',
-    tx_hash='0xdeadbeef...',
+# Verify attested evidence
+is_valid = atp.attestation.verify(
+    anchor_id='anchor-xyz123',
     evidence_hash='sha256:abc123...'
 )
 # Returns: True/False
 
-# Get anchor status
-status = atp.blockchain.anchor_status('0xdeadbeef...')
-# Returns: {'status': 'pending'|'confirmed'|'finalized', ...}
+# Get attestation status
+status = atp.attestation.status('anchor-xyz123')
+# Returns: {'status': 'pending'|'confirmed'|'verified', ...}
 ```
 
 ### AuditAPI
@@ -467,9 +465,9 @@ if executed.status == 'attested':
     print(f"Signer: {evidence.signer_wallet}")
     print(f"Approvers: {', '.join(evidence.approvers)}")
     
-    # Optionally anchor to blockchain
-    if evidence.blockchain_anchor:
-        print(f"Anchored to {evidence.blockchain_anchor['chain']}")
+    # Optionally attest to external backend
+    if evidence.attestation_anchor:
+        print(f"Attested to {evidence.attestation_anchor['backend']}")
 ```
 
 ## Next Steps

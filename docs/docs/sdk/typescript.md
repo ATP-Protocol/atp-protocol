@@ -22,9 +22,9 @@ const atp = new ATP({
   walletPrivateKey: process.env.AGENT_WALLET_KEY,
   organization: 'com.acme',
   credentialsBrokerUrl: 'http://localhost:8081',
-  evidenceAnchoring: {
+  evidenceAttestation: {
     enabled: true,
-    blockchainRpc: 'https://mainnet.infura.io/v3/YOUR-PROJECT-ID'
+    backendUrl: 'https://attestation.example.com'
   }
 });
 ```
@@ -44,7 +44,7 @@ atp.authority    // AuthorityAPI
 atp.evidence     // EvidenceAPI
 atp.audit        // AuditAPI
 atp.credentials  // CredentialAPI
-atp.blockchain   // BlockchainAPI
+atp.attestation  // AttestationAPI
 atp.wallet       // Wallet instance
 ```
 
@@ -219,29 +219,27 @@ const logs = await atp.evidence.query({
 });
 ```
 
-### BlockchainAPI
+### AttestationAPI
 
-Anchor evidence to blockchain.
+Submit evidence to external attestation backend.
 
 ```typescript
-// Anchor evidence to Ethereum
-const anchored = await atp.blockchain.anchor(evidence, {
-  chain: 'ethereum',
-  gas_limit: 50000
+// Attest evidence to external backend
+const attested = await atp.attestation.anchor(evidence, {
+  backend: 's3-immutable-ledger'
 });
-// Returns: { tx_hash: '0x...', block: 12345678, ... }
+// Returns: { anchor_id: 'anchor-xyz123', timestamp: '...', ... }
 
-// Verify anchored evidence
-const isValid = await atp.blockchain.verify({
-  chain: 'ethereum',
-  tx_hash: '0xdeadbeef...',
+// Verify attested evidence
+const isValid = await atp.attestation.verify({
+  anchor_id: 'anchor-xyz123',
   evidence_hash: 'sha256:abc123...'
 });
 // Returns: true/false
 
-// Get anchor status
-const status = await atp.blockchain.anchorStatus('0xdeadbeef...');
-// Returns: { status: 'pending'|'confirmed'|'finalized', ... }
+// Get attestation status
+const status = await atp.attestation.status('anchor-xyz123');
+// Returns: { status: 'pending'|'confirmed'|'verified', ... }
 ```
 
 ### AuditAPI
@@ -450,9 +448,9 @@ if (executed.status === 'attested') {
   console.log(`Signer: ${evidence.signer_wallet}`);
   console.log(`Approvers: ${evidence.approvers.join(', ')}`);
   
-  // Optionally anchor to blockchain
-  if (evidence.blockchain_anchor) {
-    console.log(`Anchored to ${evidence.blockchain_anchor.chain}`);
+  // Optionally attest to external backend
+  if (evidence.attestation_anchor) {
+    console.log(`Attested to ${evidence.attestation_anchor.backend}`);
   }
 }
 ```

@@ -4,7 +4,7 @@ sidebar_position: 8
 
 # Section 10: Evidence & Attestation
 
-**Evidence** is the cryptographic proof that an action was approved, executed, and completed as claimed. This section defines the 18-field evidence schema, signing, audit trails, and blockchain anchoring.
+**Evidence** is the cryptographic proof that an action was approved, executed, and completed as claimed. This section defines the 18-field evidence schema, signing, audit trails, and optional external attestation.
 
 ## What is Evidence?
 
@@ -15,7 +15,7 @@ Evidence answers four questions:
 3. **When did it happen?** Exact timestamp with precision
 4. **What was the result?** What did the system return?
 
-Evidence is signed by the ATP gateway, making it tamper-proof. It can be anchored to a blockchain, making it immutable.
+Evidence is signed by the ATP gateway, making it tamper-proof. It can optionally be submitted to an external attestation backend for durable, independently-verifiable retention.
 
 ## Evidence Schema (18 Fields)
 
@@ -47,11 +47,11 @@ Every evidence object contains:
   "error_message": null,
   "evidence_hash": "sha256:ef89ab01...",
   "signature": "base64-encoded-cose-sig",
-  "blockchain_anchor": {
-    "chain": "ethereum",
-    "tx_hash": "0xdeadbeef...",
-    "block": 12345678,
-    "timestamp": "2026-03-15T14:35:10Z"
+  "attestation_anchor": {
+    "backend": "external-attestation-service",
+    "anchor_id": "anchor-xyz123",
+    "anchor_timestamp": "2026-03-15T14:35:10Z",
+    "verification_url": "https://attestation.example.com/verify/anchor-xyz123"
   }
 }
 ```
@@ -78,7 +78,7 @@ Every evidence object contains:
 | 16 | **error_message** | string | If failure, the error message |
 | 17 | **evidence_hash** | string | SHA256 of all fields 1-16 |
 | 18 | **signature** | string | COSE signature over evidence_hash |
-| 19 | **blockchain_anchor** | object | (Optional) Blockchain proof of existence |
+| 19 | **attestation_anchor** | object | (Optional) External attestation proof |
 
 ## Evidence Generation
 
@@ -91,7 +91,7 @@ When an action completes execution (successfully or not), ATP generates evidence
 4. Compute evidence_hash of fields 1-16
 5. Sign evidence_hash with ATP gateway private key
 6. Record evidence in audit log
-7. Optionally anchor to blockchain
+7. Optionally attest to external backend
 ```
 
 ## Signing Evidence
@@ -158,52 +158,56 @@ const logs = await atp.audit.query({
 });
 ```
 
-## Blockchain Anchoring
+## External Attestation
 
-Evidence can be anchored to a blockchain, creating an immutable proof of execution.
+Evidence can be submitted to an external attestation backend for durable, independently-verifiable retention.
 
 ### How It Works
 
 ```
 1. Evidence is generated and signed
 2. Evidence hash is computed (SHA256)
-3. ATP submits evidence hash to blockchain
-4. Blockchain records hash in a transaction
-5. Transaction is included in a block
-6. Block is finalized (immutable)
-7. Evidence now has blockchain anchor: {tx_hash, block, timestamp}
+3. ATP submits evidence to attestation backend
+4. Backend records evidence and assigns anchor ID
+5. Backend may replicate/persist across durable storage
+6. Backend confirms attestation with timestamp
+7. Evidence now has attestation anchor: {backend, anchor_id, verification_url}
 ```
 
-### Blockchain Integration
+### Attestation Backend Integration
 
-ATP supports Ethereum, Solana, and other EVM-compatible chains:
+ATP supports pluggable attestation backends via a standard interface. Common implementations include:
 
 ```json
-"blockchain_anchor": {
-  "chain": "ethereum",
-  "tx_hash": "0xdeadbeef123456...",
-  "block": 12345678,
-  "block_timestamp": "2026-03-15T14:35:10Z",
-  "contract_address": "0xabcd...",
-  "anchor_cost_wei": "123456789",
-  "anchor_status": "finalized"
+"attestation_anchor": {
+  "backend": "s3-immutable-ledger",
+  "anchor_id": "s3://immutable-ledger/2026/03/15/evidence-abc123",
+  "anchor_timestamp": "2026-03-15T14:35:10Z",
+  "verification_url": "https://ledger.example.com/verify/evidence-abc123"
 }
 ```
 
+Attestation backend examples:
+- S3 Glacier / Azure Archive (immutable cloud storage)
+- Managed attestation services
+- Internal append-only audit logs
+- WORM (Write-Once-Read-Many) storage systems
+
+
 ### Verification
 
-To verify evidence was anchored:
+To verify evidence was attested:
 
 ```typescript
 const evidence = await atp.evidence.get(action_id);
 
-// Check blockchain
-const isAnchored = !!evidence.blockchain_anchor;
-const txHash = evidence.blockchain_anchor?.tx_hash;
+// Check attestation backend
+const isAttested = !!evidence.attestation_anchor;
+const anchorId = evidence.attestation_anchor?.anchor_id;
 
-// Verify hash is in blockchain
-const onChain = await atp.blockchain.verify(txHash);
-console.log(onChain); // true or false
+// Verify evidence in backend
+const verified = await atp.attestation.verify(anchorId);
+console.log(verified); // true or false
 ```
 
 ## Compliance & Forensics
@@ -264,13 +268,12 @@ console.log(evidence.signature); // COSE signature
 // Record evidence
 await atp.evidence.record(evidence);
 
-// Optionally anchor to blockchain
-const anchored = await atp.blockchain.anchor(evidence, {
-  chain: 'ethereum',
-  gas_limit: 50000,
+// Optionally attest to external backend
+const attested = await atp.attestation.anchor(evidence, {
+  backend: 's3-immutable-ledger',
 });
 
-console.log(anchored.tx_hash); // Blockchain transaction
+console.log(attested.anchor_id); // Attestation anchor ID
 ```
 
 Query evidence:
@@ -307,13 +310,13 @@ The Evidence system is vulnerable to:
    - **Mitigation:** Key rotation every 30 days, key escrow, monitor key access logs
 
 2. **Audit log tampering** — If the audit log database is compromised, entries can be modified
-   - **Mitigation:** Write-once storage, blockchain anchoring, replicated audit logs
+   - **Mitigation:** Write-once storage, external attestation, replicated audit logs
 
-3. **Blockchain double-spend** — An attacker re-orgs the blockchain to change anchored evidence
-   - **Mitigation:** Use finalized blocks only, wait for multiple confirmations, multi-chain anchoring
+3. **Backend compromise** — An attacker compromises the attestation backend to modify evidence
+   - **Mitigation:** Use replicated backends, cryptographic verification, external monitoring
 
 4. **Time manipulation** — Attacker changes system clock to forge timestamps
-   - **Mitigation:** NTP hardening, timestamping authority, blockchain timestamps as reference
+   - **Mitigation:** NTP hardening, timestamping authority, attestation backend timestamps as reference
 
 5. **Evidence omission** — An attacker suppresses certain evidence from being recorded
    - **Mitigation:** Write-once audit log, distributed logging, log aggregation
@@ -321,13 +324,13 @@ The Evidence system is vulnerable to:
 ## Best Practices
 
 1. **Always generate evidence** — Even for failed actions
-2. **Sign with long-term keys** — Don't rotate gateway signing keys
-3. **Anchor sensitive actions** — Production changes, financial transactions
+2. **Sign with long-term keys** — Rotate gateway signing keys every 30 days
+3. **Attest sensitive actions** — Production changes, financial transactions
 4. **Query audit logs regularly** — Detect anomalies early
 5. **Retain evidence per regulation** — Don't prune too early
 6. **Encrypt evidence in transit** — TLS for all evidence transmission
 7. **Back up audit logs** — Geographic distribution, long-term storage
-8. **Test evidence verification** — Make sure your blockchain verification works
+8. **Test evidence verification** — Make sure your attestation backend verification works
 
 ## Next Steps
 

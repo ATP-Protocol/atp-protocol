@@ -137,7 +137,7 @@ The certification process has these steps:
 4. Security review completed (internal)
 5. Deployment documentation
 6. Evidence of federation testing (if used)
-7. Blockchain anchor testing (if used)
+7. External attestation testing (if used)
 
 ### Steps
 
@@ -332,7 +332,7 @@ Certified Features:
   ✓ Action execution
   ✓ Cross-org federation
   ✓ Rate limiting & quotas
-  ✓ Blockchain anchoring
+  ✓ External attestation
   ✓ Disaster recovery
   ✓ Cryptographic security
   ✓ Performance (1000+ req/sec)

@@ -1,6 +1,6 @@
 # @atp-protocol/sdk
 
-TypeScript SDK for the [Agent Trust Protocol (ATP)](https://github.com/ATP-Protocol/atp-protocol) — governed execution for AI agents on [DUAL](https://dual.network).
+TypeScript SDK for the [Agent Trust Protocol (ATP)](https://github.com/ATP-Protocol/atp-protocol) — governed execution for AI agents with pluggable attestation backends.
 
 Govern AI agent execution with authority checks, policy evaluation, approval flows, credential brokerage, and evidence capture.
 

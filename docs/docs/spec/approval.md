@@ -100,13 +100,13 @@ ATP is running the action. The external system (user database, cloud API, etc.) 
 **Idempotency:** If executing the same action twice, the second execution MUST be idempotent (no duplicate side effects).
 
 ### Attested
-The action executed successfully and evidence has been generated and signed. The action is complete but not yet blockchain-anchored.
+The action executed successfully and evidence has been generated and signed. The action is complete but not yet durably attested.
 
 **Entry:** Execution succeeded, evidence signed
 
 **Exit conditions:**
-- Move to **Settled** if evidence is anchored to blockchain (optional)
-- Or stay in Attested if blockchain anchoring is not configured
+- Move to **Settled** if evidence is attested to external backend (optional)
+- Or stay in Attested if external attestation is not configured
 
 **Evidence:** Contains 18 fields (see Evidence & Attestation section)
 
@@ -120,13 +120,13 @@ Execution failed. ATP attempted to run the action but the external system return
 **Error details:** Failure reason logged. Agent can inspect and retry with a new action if appropriate.
 
 ### Settled
-The action's evidence has been anchored to a blockchain. This creates an immutable audit trail.
+The action's evidence has been durably attested via an external backend. This creates a verifiable, immutable audit trail.
 
-**Entry:** Evidence recorded and blockchain anchor succeeded
+**Entry:** Evidence recorded and external attestation succeeded
 
 **Exit conditions:** Terminal state. Action is fully settled.
 
-**Blockchain:** Evidence hash is recorded on the specified chain (Ethereum, Solana, etc.)
+**Attestation:** Evidence is recorded with an external attestation backend (immutable storage, managed services, or other durable backends)
 
 ## Transitions and Timing
 
@@ -266,7 +266,7 @@ Timeouts are configurable per contract:
 | Approved | Executing | Execution begins | Credentials, parameters |
 | Executing | Attested | Execution succeeds | Result, evidence |
 | Executing | Exec Failed | Execution fails | Error details |
-| Attested | Settled | Blockchain anchor | Anchor transaction |
+| Attested | Settled | External attestation | Attestation anchor ID |
 
 ## Example Flow: User Deletion
 
@@ -293,10 +293,10 @@ Timeouts are configurable per contract:
    Status: Attested
    Evidence generated with timestamp, result hash, signer
 
-7. Evidence anchored to Ethereum (optional)
+7. Evidence attested via external backend (optional)
    Status: Settled
-   Block: 12345678
-   Tx: 0xabcd...
+   Attestation backend: s3-immutable-ledger
+   Anchor ID: s3://ledger/2026/03/15/evidence-abc123
 
 Action complete. Full audit trail preserved forever.
 ```
