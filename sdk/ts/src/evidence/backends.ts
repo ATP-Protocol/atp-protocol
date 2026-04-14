@@ -3,7 +3,7 @@
  *
  * Pluggable storage and anchoring backends for ATP evidence records.
  * The protocol is backend-agnostic — evidence can be stored locally,
- * on the DUAL network, on IPFS, or on any combination.
+ * on external attestation services, or on any combination.
  *
  * @packageDocumentation
  */
@@ -53,7 +53,7 @@ export interface EvidenceQueryResult {
  * Evidence backend interface.
  *
  * Implement this to create a custom evidence storage backend.
- * The SDK ships with Memory, File, and DUAL backends.
+ * The SDK ships with Memory, File, and Postgres backends.
  */
 export interface EvidenceBackend {
   /** Backend name (e.g., "memory", "file", "dual"). */
@@ -274,263 +274,23 @@ export class FileEvidenceBackend implements EvidenceBackend {
 }
 
 // ---------------------------------------------------------------------------
-// DUAL Backend (on-chain anchoring via DUAL network)
-// ---------------------------------------------------------------------------
-
-/**
- * Configuration for the DUAL evidence backend.
- */
-export interface DUALBackendConfig {
-  /** DUAL API endpoint (e.g., "https://api.dual.foundation"). */
-  endpoint: string;
-  /** API key for authentication. */
-  apiKey: string;
-  /** Evidence template ID on the DUAL network. */
-  templateId: string;
-  /** Network ("mainnet" | "testnet"). */
-  network?: "mainnet" | "testnet";
-}
-
-/**
- * DUAL network evidence backend.
- * Mints evidence records as immutable tokens on the DUAL blockchain.
- *
- * @example
- * ```typescript
- * import { DUALEvidenceBackend } from "@atp-protocol/sdk/evidence";
- *
- * const backend = new DUALEvidenceBackend({
- *   endpoint: "https://api.dual.foundation",
- *   apiKey: process.env.DUAL_API_KEY!,
- *   templateId: "69db28bf77b40528a5b4851f", // io.atp.evidence.v1
- * });
- *
- * // This mints a real token on-chain
- * await backend.store(evidenceRecord);
- * ```
- */
-export class DUALEvidenceBackend implements EvidenceBackend {
-  readonly name = "dual";
-  private config: Required<DUALBackendConfig>;
-  private objectIdMap = new Map<string, string>(); // evidence_id → DUAL object_id
-
-  constructor(config: DUALBackendConfig) {
-    this.config = {
-      network: "testnet",
-      ...config,
-    };
-  }
-
-  private async dualFetch<T>(
-    path: string,
-    opts: RequestInit = {}
-  ): Promise<T> {
-    const res = await fetch(`${this.config.endpoint}${path}`, {
-      ...opts,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${this.config.apiKey}`,
-        ...(opts.headers as Record<string, string> || {}),
-      },
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      const redactedBody = redactSecrets(body, [this.config.apiKey]);
-      throw new Error(`DUAL ${res.status}: ${redactedBody}`);
-    }
-    return res.json() as Promise<T>;
-  }
-
-  async store(record: EvidenceRecord): Promise<void> {
-    // Step 1: Mint a new evidence token
-    const mintResult = await this.dualFetch<any>("/actions", {
-      method: "POST",
-      body: JSON.stringify({
-        mint: { template_id: this.config.templateId, num: 1 },
-      }),
-    });
-
-    const objectId =
-      mintResult.data?.steps?.[0]?.output?.ids?.[0] ??
-      mintResult.data?.object_id;
-
-    if (!objectId) {
-      throw new Error("DUAL mint did not return an object ID");
-    }
-
-    // Step 2: Write evidence data to the token
-    await this.dualFetch("/actions", {
-      method: "POST",
-      body: JSON.stringify({
-        update: {
-          id: objectId,
-          data: {
-            custom: {
-              evidence_id: record.evidence_id,
-              execution_id: record.execution_id,
-              contract_id: record.contract_id,
-              action: record.action,
-              wallet_address: record.requesting_wallet,
-              authority: record.authority,
-              policy_result:
-                record.outcome === "outcome:denied" ? "denied" : "pass",
-              approval_status: record.approval
-                ? record.approval.decision
-                : "not_required",
-              outcome: record.outcome.replace("outcome:", ""),
-              scope_hash: record.request_hash,
-              timestamp: record.timestamps.evidenced_at,
-              gateway_version: "1.0.0-draft.2",
-            },
-          },
-        },
-      }),
-    });
-
-    // Track the mapping
-    this.objectIdMap.set(record.evidence_id, objectId);
-  }
-
-  async get(evidenceId: string): Promise<EvidenceRecord | null> {
-    const objectId = this.objectIdMap.get(evidenceId);
-    if (!objectId) return null;
-
-    try {
-      const result = await this.dualFetch<any>(`/objects/${objectId}`);
-      const custom = result.data?.custom ?? {};
-
-      // Reconstruct a partial evidence record from on-chain data
-      return {
-        evidence_id: custom.evidence_id,
-        execution_id: custom.execution_id ?? "",
-        contract_id: custom.contract_id,
-        authority: custom.authority,
-        requesting_wallet: custom.wallet_address,
-        requesting_org: "",
-        action: custom.action,
-        scope_snapshot: {},
-        credential_path: {
-          provider: "none",
-          scope_used: [],
-          injection_method: "custom",
-        },
-        outcome: `outcome:${custom.outcome}` as any,
-        request_hash: custom.scope_hash,
-        policy_snapshot: {
-          policies_evaluated: 0,
-          constraints_applied: [],
-        },
-        timestamps: {
-          requested_at: custom.timestamp,
-          evidenced_at: custom.timestamp,
-        },
-        gateway_id: "",
-        attestation_level: "full",
-        attestation_ref: `dual:${objectId}`,
-        evidence_status: "confirmed",
-      };
-    } catch {
-      return null;
-    }
-  }
-
-  async query(_params: EvidenceQuery): Promise<EvidenceQueryResult> {
-    // Query DUAL objects by template
-    const result = await this.dualFetch<any>(
-      `/objects?template_id=${this.config.templateId}&limit=${_params.limit ?? 100}`
-    );
-
-    const objects = result.data?.objects ?? [];
-    const records: EvidenceRecord[] = objects.map((obj: any) => {
-      const c = obj.custom ?? {};
-      return {
-        evidence_id: c.evidence_id ?? obj.id,
-        execution_id: c.execution_id ?? "",
-        contract_id: c.contract_id ?? "",
-        authority: c.authority ?? "",
-        requesting_wallet: c.wallet_address ?? "",
-        requesting_org: obj.org_id ?? "",
-        action: c.action ?? "",
-        scope_snapshot: {},
-        credential_path: {
-          provider: "none",
-          scope_used: [],
-          injection_method: "custom" as const,
-        },
-        outcome: `outcome:${c.outcome ?? "unknown"}` as any,
-        request_hash: c.scope_hash ?? "",
-        policy_snapshot: { policies_evaluated: 0, constraints_applied: [] },
-        timestamps: {
-          requested_at: c.timestamp ?? obj.when_created,
-          evidenced_at: c.timestamp ?? obj.when_created,
-        },
-        gateway_id: "",
-        attestation_level: "full" as const,
-        attestation_ref: `dual:${obj.id}`,
-        evidence_status: "confirmed" as const,
-      };
-    });
-
-    return {
-      records,
-      total: records.length,
-      has_more: !!result.data?.next,
-    };
-  }
-
-  async verify(evidenceId: string): Promise<{
-    verified: boolean;
-    attestation_ref?: string;
-    backend: string;
-    verified_at: string;
-  }> {
-    const objectId = this.objectIdMap.get(evidenceId);
-    if (!objectId) {
-      return {
-        verified: false,
-        backend: this.name,
-        verified_at: new Date().toISOString(),
-      };
-    }
-
-    try {
-      const result = await this.dualFetch<any>(`/objects/${objectId}`);
-      const custom = result.data?.custom ?? {};
-
-      return {
-        verified: custom.evidence_id === evidenceId,
-        attestation_ref: `dual:${objectId}`,
-        backend: this.name,
-        verified_at: new Date().toISOString(),
-      };
-    } catch {
-      return {
-        verified: false,
-        backend: this.name,
-        verified_at: new Date().toISOString(),
-      };
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Multi Backend (fan-out to multiple backends)
 // ---------------------------------------------------------------------------
 
 /**
  * Multi-backend that writes to multiple backends simultaneously.
- * Useful for local + on-chain dual-write patterns.
+ * Useful for local + external dual-write patterns.
  *
  * @example
  * ```typescript
- * import { MultiBackend, FileEvidenceBackend, DUALEvidenceBackend } from "@atp-protocol/sdk/evidence";
+ * import { MultiBackend, FileEvidenceBackend, PostgresBackend } from "@atp-protocol/sdk/evidence";
  *
  * const backend = new MultiBackend([
  *   new FileEvidenceBackend("./evidence"),
- *   new DUALEvidenceBackend({ endpoint: "...", apiKey: "...", templateId: "..." }),
+ *   new PostgresBackend({ connectionString: "...", schema: "evidence" }),
  * ]);
  *
- * // Writes to both file and DUAL
+ * // Writes to both file and Postgres
  * await backend.store(record);
  *
  * // Verify checks all backends
@@ -656,21 +416,4 @@ function canonicalJson(obj: unknown): string {
       `${JSON.stringify(key)}:${canonicalJson((obj as Record<string, unknown>)[key])}`
   );
   return `{${pairs.join(",")}}`;
-}
-
-/**
- * Redact known secrets from error messages.
- * Replaces credential values with [REDACTED].
- */
-function redactSecrets(text: string, secrets: (string | undefined)[]): string {
-  let result = text;
-  for (const secret of secrets) {
-    if (secret && secret.length > 0) {
-      // Escape regex special chars in the secret
-      const escaped = secret.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(escaped, "g");
-      result = result.replace(regex, "[REDACTED]");
-    }
-  }
-  return result;
 }

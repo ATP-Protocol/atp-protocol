@@ -20,7 +20,6 @@ export {
   type EvidenceQueryResult,
   MemoryEvidenceBackend,
   FileEvidenceBackend,
-  DUALEvidenceBackend,
   MultiBackend,
 } from "./backends";
 

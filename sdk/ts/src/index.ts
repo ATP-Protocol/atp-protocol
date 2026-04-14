@@ -83,7 +83,6 @@ export {
   hashEvidence,
   MemoryEvidenceBackend,
   FileEvidenceBackend,
-  DUALEvidenceBackend,
   MultiBackend,
 } from "./evidence";
 export type {
