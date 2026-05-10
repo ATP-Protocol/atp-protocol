@@ -45,6 +45,8 @@ Agent → MCP tool call
 
 ATP does not compete with MCP. It governs it. MCP defines *how* an agent calls a tool. ATP defines *whether* that call should happen.
 
+For the full runtime sequence, including approval, credential brokerage, evidence, and failure branches, see [How ATP Works](docs/docs/process-flow.md).
+
 ## 5-minute proof
 
 Run the local MCP governance demo to see ATP make real allow/deny/approval decisions without external credentials:

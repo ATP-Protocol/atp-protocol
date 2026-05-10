@@ -165,6 +165,7 @@ Agents need credentials to access systems (API keys, database passwords, cloud t
 
 ## Next Steps
 
+- **[How ATP Works](./process-flow.md)** — See the end-to-end governed execution flow
 - **[Quick Start](./quick-start.md)** — Set up ATP SDK and govern your first MCP tool in 5 minutes
 - **[Specification](./spec/overview.md)** — Read the full 14-section spec for comprehensive details
 - **[Gateway Documentation](./gateway/overview.md)** — Learn how to deploy and run the ATP reference gateway

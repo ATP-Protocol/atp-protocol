@@ -15,6 +15,7 @@
 const sidebars = {
   docsSidebar: [
     'intro',
+    'process-flow',
     'quick-start',
     'proof-demo',
     'adoption-paths',
