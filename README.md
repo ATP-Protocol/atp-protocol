@@ -182,11 +182,12 @@ Open source gives ATP reach. Pluggable backends give ATP flexibility.
 - [x] Strict proof report command and committed reference report
 - [x] CI proof smoke job
 - [x] Reference conformance report artifact path
+- [x] MCP server package build, dry-run pack, and publish workflow
 - [x] Public readiness scorecard
 - [x] Design partner intake path
 - [x] Design partner case-note template
 - [x] MCP install path and listing draft
-- [ ] npm/PyPI initial publish
+- [ ] npm/PyPI/MCP initial release execution
 - [ ] First external conformance report
 - [ ] Design partner case notes
 - [ ] MCP marketplace submission/acceptance

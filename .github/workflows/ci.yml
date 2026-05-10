@@ -139,6 +139,33 @@ jobs:
           name: mcp-demo-proof-report
           path: examples/mcp-demo/proof/latest-demo-report.json
 
+  mcp-server:
+    name: MCP Server Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build SDK dependency
+        working-directory: sdk/ts
+        run: npm install && npm run build
+      - name: Build gateway dependency
+        working-directory: gateway
+        run: npm install && npm run build
+      - name: Install MCP server dependencies
+        working-directory: mcp-server
+        run: npm install --legacy-peer-deps
+      - name: Typecheck MCP server
+        working-directory: mcp-server
+        run: npm run typecheck
+      - name: Build MCP server
+        working-directory: mcp-server
+        run: npm run build
+      - name: Dry-run MCP package
+        working-directory: mcp-server
+        run: npm pack --dry-run
+
   schema:
     name: Schema Validation
     runs-on: ubuntu-latest

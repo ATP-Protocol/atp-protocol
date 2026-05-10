@@ -58,3 +58,9 @@ Before submitting to a marketplace or registry:
 - tool names match the package implementation;
 - security note explains credential-store limitations;
 - proof demo and conformance report are linked from the listing.
+
+## Release check
+
+CI includes an `MCP Server Package` job that builds local SDK and gateway dependencies, typechecks the MCP server, builds it, and runs `npm pack --dry-run`.
+
+The publish workflow includes `publish-mcp-server`, which waits for `@atp-protocol/sdk` and `@atp-protocol/gateway` before publishing the MCP package.
