@@ -68,12 +68,11 @@
     "ai-agents",
     "governance",
     "mcp",
-    "dual",
     "trust",
     "protocol",
     "model-context-protocol"
   ],
-  "author": "DUAL Network",
+  "author": "ATP Protocol",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",

@@ -2,7 +2,7 @@
   "name": "@atp-protocol/conformance",
   "version": "0.1.0",
   "description": "ATP conformance test suite for validating protocol implementations",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bin": {
     "atp-conformance": "./dist/cjs/cli.js"
   },
@@ -74,6 +74,6 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/example/atp-protocol"
+    "url": "https://github.com/ATP-Protocol/atp-protocol"
   }
 }

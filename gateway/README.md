@@ -14,7 +14,7 @@ npm install @atp-protocol/gateway
 
 The gateway mediates the full governed execution pipeline:
 
-1. **Authority check** — Verify wallet-org-role binding and authority grant
+1. **Authority check** — Verify identity-org-role binding and authority grant
 2. **Policy evaluation** — Enforce scope constraints (enumerations, numeric bounds, deny lists, etc.)
 3. **Approval gate** — Route to approvers, handle timeout and escalation
 4. **Credential brokerage** — Resolve and inject credentials without agent exposure
@@ -81,7 +81,7 @@ console.log(result.evidence_id); // "evi_abc123..."
 
 This reference gateway implements **ATP-Verified** conformance:
 
-- Authority checks with wallet-org-role binding
+- Authority checks with identity-org-role binding
 - Policy evaluation with 6 constraint types
 - Approval state machine with pending/approve/deny
 - Credential brokerage with fail-closed behavior
