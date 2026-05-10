@@ -19,6 +19,8 @@ const sidebars = {
     'proof-demo',
     'adoption-paths',
     'release-readiness',
+    'mcp-install',
+    'design-partner-evidence',
     {
       label: 'Specification',
       items: [

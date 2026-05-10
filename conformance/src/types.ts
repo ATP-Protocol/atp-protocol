@@ -116,8 +116,12 @@ export interface EvidenceResult {
  * Result of external evidence anchoring
  */
 export interface AnchorResult {
-  tx_hash: string;
-  block: number;
+  attestation_ref: string;
+  backend: string;
+  anchored_at: string;
+  tx_hash?: string;
+  block?: number;
+  metadata?: Record<string, unknown>;
 }
 
 /**

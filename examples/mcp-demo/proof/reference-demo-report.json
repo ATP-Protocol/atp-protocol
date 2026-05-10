@@ -1,0 +1,215 @@
+{
+  "report_type": "atp-mcp-demo-proof",
+  "version": "1.0.0",
+  "generated_at": "2026-05-11T00:00:00.000Z",
+  "command": "npm run proof",
+  "summary": {
+    "total": 6,
+    "success": 3,
+    "denied": 2,
+    "pending": 1,
+    "expected_matches": 6,
+    "expected_mismatches": 0
+  },
+  "scenarios": [
+    {
+      "scenario": "Send Email to Approved Vendor",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "passed": true,
+      "gates": [
+        {
+          "gate": "authority",
+          "status": "passed",
+          "detail": "procurement_agent"
+        },
+        {
+          "gate": "policy",
+          "status": "passed",
+          "detail": "constraints satisfied"
+        },
+        {
+          "gate": "approval",
+          "status": "approved",
+          "detail": "manual approval gate; approval_id=app_001"
+        },
+        {
+          "gate": "credentials",
+          "status": "passed",
+          "detail": "gmail"
+        },
+        {
+          "gate": "execution",
+          "status": "passed",
+          "detail": "exe_001"
+        },
+        {
+          "gate": "evidence",
+          "status": "recorded",
+          "detail": "evi_001"
+        }
+      ],
+      "execution_id": "exe_001",
+      "approval_id": "app_001",
+      "evidence_id": "evi_001"
+    },
+    {
+      "scenario": "Send Email to Unauthorized Domain",
+      "expected_outcome": "denied",
+      "actual_outcome": "denied",
+      "passed": true,
+      "gates": [
+        {
+          "gate": "authority",
+          "status": "passed",
+          "detail": "procurement_agent"
+        },
+        {
+          "gate": "policy",
+          "status": "denied",
+          "detail": "domain not whitelisted (stranger@random-company.com)"
+        },
+        {
+          "gate": "evidence",
+          "status": "recorded",
+          "detail": "evi_002"
+        }
+      ],
+      "evidence_id": "evi_002"
+    },
+    {
+      "scenario": "Send Email with Prohibited Content",
+      "expected_outcome": "denied",
+      "actual_outcome": "denied",
+      "passed": true,
+      "gates": [
+        {
+          "gate": "authority",
+          "status": "passed",
+          "detail": "procurement_agent"
+        },
+        {
+          "gate": "policy",
+          "status": "denied",
+          "detail": "prohibited content detected"
+        },
+        {
+          "gate": "evidence",
+          "status": "recorded",
+          "detail": "evi_003"
+        }
+      ],
+      "evidence_id": "evi_003"
+    },
+    {
+      "scenario": "Read Inventory (No Approval)",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "passed": true,
+      "gates": [
+        {
+          "gate": "authority",
+          "status": "passed",
+          "detail": "procurement_agent"
+        },
+        {
+          "gate": "policy",
+          "status": "passed",
+          "detail": "constraints satisfied"
+        },
+        {
+          "gate": "approval",
+          "status": "passed",
+          "detail": "not required"
+        },
+        {
+          "gate": "credentials",
+          "status": "passed",
+          "detail": "inventory-api"
+        },
+        {
+          "gate": "execution",
+          "status": "passed",
+          "detail": "exe_004"
+        },
+        {
+          "gate": "evidence",
+          "status": "recorded",
+          "detail": "evi_004"
+        }
+      ],
+      "execution_id": "exe_004",
+      "evidence_id": "evi_004"
+    },
+    {
+      "scenario": "Approve $5,000 Payment (No Approval Needed)",
+      "expected_outcome": "success",
+      "actual_outcome": "success",
+      "passed": true,
+      "gates": [
+        {
+          "gate": "authority",
+          "status": "passed",
+          "detail": "finance_controller"
+        },
+        {
+          "gate": "policy",
+          "status": "passed",
+          "detail": "constraints satisfied"
+        },
+        {
+          "gate": "approval",
+          "status": "passed",
+          "detail": "not required"
+        },
+        {
+          "gate": "credentials",
+          "status": "passed",
+          "detail": "banking-api"
+        },
+        {
+          "gate": "execution",
+          "status": "passed",
+          "detail": "exe_005"
+        },
+        {
+          "gate": "evidence",
+          "status": "recorded",
+          "detail": "evi_005"
+        }
+      ],
+      "execution_id": "exe_005",
+      "evidence_id": "evi_005"
+    },
+    {
+      "scenario": "Approve $25,000 Payment (Requires Approval)",
+      "expected_outcome": "pending",
+      "actual_outcome": "pending",
+      "passed": true,
+      "gates": [
+        {
+          "gate": "authority",
+          "status": "passed",
+          "detail": "finance_controller"
+        },
+        {
+          "gate": "policy",
+          "status": "passed",
+          "detail": "constraints satisfied"
+        },
+        {
+          "gate": "approval",
+          "status": "pending",
+          "detail": "above threshold ($25000 > $10000)"
+        },
+        {
+          "gate": "evidence",
+          "status": "recorded",
+          "detail": "evi_006"
+        }
+      ],
+      "approval_id": "app_006",
+      "evidence_id": "evi_006"
+    }
+  ]
+}

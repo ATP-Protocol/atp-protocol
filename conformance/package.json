@@ -43,7 +43,9 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:reference": "node dist/cjs/cli.js --target src/adapters/reference.ts",
+    "test:reference": "npm run build && node dist/cjs/cli.js --target dist/cjs/adapters/reference.js",
+    "report:reference": "node dist/cjs/cli.js --target dist/cjs/adapters/reference.js --format json --quiet",
+    "report:reference:build": "npm run build && npm run report:reference",
     "lint": "eslint src --ext .ts",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build && npm run test"
@@ -72,6 +74,13 @@
     "dist",
     "src/fixtures"
   ],
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/src/**/*.test.ts"
+    ]
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/ATP-Protocol/atp-protocol"

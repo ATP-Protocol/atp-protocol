@@ -17,6 +17,8 @@ This checklist defines what must be true before ATP is called release-ready rath
 | Docs | README and docs quick start match the published package APIs |
 | Changelog | Release notes list protocol, SDK, gateway, and conformance changes |
 | Smoke test | Fresh install can run the 5-minute proof path |
+| Proof artifact | CI uploads a strict MCP demo proof report |
+| Conformance artifact | CI uploads a reference conformance report |
 
 ## First release sequence
 
@@ -39,13 +41,28 @@ ATP currently has:
 - reference gateway;
 - conformance fixtures and runner;
 - MCP server;
-- local proof demo;
+- strict local proof demo with committed reference report;
+- reference conformance report generation path;
+- MCP install path and listing draft;
+- design partner evidence template;
 - CI and publish workflows.
 
-ATP still needs before a 9.8 public readiness claim:
+ATP still needs before a 9.8-proven public claim:
 
 - first npm/PyPI package publication;
-- a recorded proof demo output;
 - first external conformance report;
 - at least two design partner integration notes;
-- marketplace listing or install path for the MCP server.
+- marketplace listing submission/acceptance for the MCP server.
+
+## 9.8 readiness evidence
+
+| Evidence | Repo path |
+|----------|-----------|
+| Strict proof command | `examples/mcp-demo/package.json` (`npm run proof`) |
+| Reference proof report | `examples/mcp-demo/proof/reference-demo-report.json` |
+| CI proof artifact | `.github/workflows/ci.yml` (`mcp-demo-proof-report`) |
+| Reference conformance artifact | `.github/workflows/ci.yml` (`reference-conformance-report`) |
+| External report intake | `.github/ISSUE_TEMPLATE/conformance-report.yml` |
+| Design partner intake | `.github/ISSUE_TEMPLATE/design-partner.yml` |
+| Design partner case-note format | `docs/docs/design-partner-evidence.md` |
+| MCP listing draft | `mcp-server/marketplace-listing.json` |

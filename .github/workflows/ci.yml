@@ -93,6 +93,51 @@ jobs:
       - name: Run tests
         working-directory: conformance
         run: npx jest
+      - name: Generate reference conformance report
+        if: matrix.node-version == 20
+        working-directory: conformance
+        run: npm run report:reference > reference-conformance-report.json
+      - name: Upload reference conformance report
+        if: matrix.node-version == 20
+        uses: actions/upload-artifact@v4
+        with:
+          name: reference-conformance-report
+          path: conformance/reference-conformance-report.json
+
+  proof-demo:
+    name: MCP Proof Demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install gateway dependencies
+        working-directory: gateway
+        run: npm install
+      - name: Install demo dependencies
+        working-directory: examples/mcp-demo
+        run: npm install
+      - name: Run strict proof demo
+        working-directory: examples/mcp-demo
+        run: npm run proof
+      - name: Validate proof report
+        working-directory: examples/mcp-demo
+        run: |
+          node -e "
+            const report = require('./proof/latest-demo-report.json');
+            if (report.summary.total !== 6) throw new Error('Expected 6 scenarios');
+            if (report.summary.expected_mismatches !== 0) throw new Error('Proof mismatches found');
+            if (report.summary.success < 3) throw new Error('Expected at least 3 success scenarios');
+            if (report.summary.denied < 2) throw new Error('Expected at least 2 denial scenarios');
+            if (report.summary.pending < 1) throw new Error('Expected at least 1 pending scenario');
+            console.log('Proof report valid');
+          "
+      - name: Upload proof report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mcp-demo-proof-report
+          path: examples/mcp-demo/proof/latest-demo-report.json
 
   schema:
     name: Schema Validation

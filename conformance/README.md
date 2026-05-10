@@ -199,8 +199,11 @@ interface ConformanceTarget {
 
   // Level 4: Attested (optional)
   anchorEvidence?(evidenceId: string): Promise<{
-    tx_hash: string;
-    block: number;
+    attestation_ref: string;
+    backend: string;
+    anchored_at: string;
+    tx_hash?: string;
+    block?: number;
   }>;
 }
 ```
@@ -268,6 +271,10 @@ npm run build
 # Run conformance tests
 npm test
 
+# Generate the reference implementation report
+npm run build
+npm run report:reference
+
 # Run with coverage
 npm run test:coverage
 
@@ -327,7 +334,7 @@ The fixtures are versioned along with the ATP spec. Check `suite_version` in the
 Yes, but the standard fixtures should be used for interoperability. You can add implementation-specific tests separately.
 
 **Q: What if a method is optional and I don't implement it?**
-The test runner will skip Level 3+ tests. Your gateway will be reported as Level 1 or 2.
+The test runner will fail that level and report the highest lower level that fully passed.
 
 ## Contributing
 

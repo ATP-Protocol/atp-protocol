@@ -88,4 +88,49 @@ describe("ATP Conformance Suite", () => {
     console.log(`\nReference implementation achieved: ${report.level_achieved}`);
     console.log(`Test coverage: ${report.results.aware.tests.length + report.results.compatible.tests.length + report.results.verified.tests.length} tests`);
   });
+
+  it("should not overclaim attested when lower levels fail", async () => {
+    const target = {
+      validateContract: () => ({
+        valid: false,
+        errors: [{ field: "contract", code: "forced_failure" }],
+      }),
+      evaluatePolicy: () => ({ permitted: true }),
+      transitionApproval: () => ({ next_state: "APPROVED" }),
+      captureEvidence: () => ({
+        evidence_id: "evi_forced",
+        execution_id: "exe_forced",
+        request_hash: "sha256:forced",
+      }),
+      computeIdempotencyKey: () => "idk_forced",
+      classifyOutcome: () => "success",
+      anchorEvidence: async () => ({
+        attestation_ref: "attestation:forced",
+        backend: "test",
+        anchored_at: "2026-05-11T00:00:00.000Z",
+      }),
+    };
+
+    const runner = new ConformanceRunner(target, "bad-attested-target");
+    const report = await runner.run();
+
+    expect(report.results.attested.failed).toBe(0);
+    expect(report.level_achieved).toBe("none");
+  });
+
+  it("should require a complete attestation anchor result", async () => {
+    const target = createReferenceAdapter();
+    target.anchorEvidence = async () =>
+      ({
+        attestation_ref: "attestation:missing-backend",
+        backend: "",
+        anchored_at: "2026-05-11T00:00:00.000Z",
+      });
+
+    const runner = new ConformanceRunner(target, "bad-anchor-target");
+    const report = await runner.run();
+
+    expect(report.results.attested.failed).toBe(1);
+    expect(report.results.attested.tests[0].error).toContain("backend");
+  });
 });

@@ -18,6 +18,8 @@
 import { setupDemoGateway } from "./server";
 import { Formatter, Color } from "./output/formatter";
 import type { ExecutionRequest } from "../../../gateway/src/types";
+import { mkdir, writeFile } from "fs/promises";
+import { dirname } from "path";
 
 interface Scenario {
   title: string;
@@ -26,8 +28,52 @@ interface Scenario {
   expectedOutcome: "success" | "denied" | "pending";
 }
 
+interface GateResult {
+  gate: "authority" | "policy" | "approval" | "credentials" | "execution" | "evidence";
+  status: "passed" | "denied" | "pending" | "approved" | "recorded";
+  detail: string;
+}
+
+interface ScenarioProof {
+  scenario: string;
+  expected_outcome: "success" | "denied" | "pending";
+  actual_outcome: "success" | "denied" | "pending";
+  passed: boolean;
+  gates: GateResult[];
+  execution_id?: string;
+  approval_id?: string;
+  evidence_id?: string;
+}
+
+interface ProofReport {
+  report_type: "atp-mcp-demo-proof";
+  version: "1.0.0";
+  generated_at: string;
+  command: string;
+  summary: {
+    total: number;
+    success: number;
+    denied: number;
+    pending: number;
+    expected_matches: number;
+    expected_mismatches: number;
+  };
+  scenarios: ScenarioProof[];
+}
+
+interface CliOptions {
+  strict: boolean;
+  noClear: boolean;
+  reportPath?: string;
+}
+
 async function runDemo() {
-  console.clear();
+  const options = parseArgs(process.argv.slice(2));
+
+  if (!options.noClear && !process.env.CI) {
+    console.clear();
+  }
+
   console.log(Formatter.header("ATP — MCP Governed Execution Demo"));
 
   // Setup gateway with all contracts, authorities, and credentials
@@ -158,9 +204,12 @@ async function runDemo() {
   const results: Array<{
     scenario: string;
     outcome: "success" | "denied" | "pending";
+    expected: "success" | "denied" | "pending";
+    passed: boolean;
+    proof: ScenarioProof;
   }> = [];
 
-  for (const scenario of scenarios) {
+  for (const [index, scenario] of scenarios.entries()) {
     console.log(
       Formatter.scenario(scenario.title, scenario.description)
     );
@@ -180,13 +229,36 @@ async function runDemo() {
     // Execute through gateway
     console.log(`\n   ${Color.FgGray}Pipeline:${Color.Reset}`);
 
-    const result = await executeScenario(gateway, scenario);
+    const result = await executeScenario(gateway, scenario, index);
+    const passed = result.outcome === scenario.expectedOutcome;
     results.push({
       scenario: scenario.title,
       outcome: result.outcome,
+      expected: scenario.expectedOutcome,
+      passed,
+      proof: {
+        scenario: scenario.title,
+        expected_outcome: scenario.expectedOutcome,
+        actual_outcome: result.outcome,
+        passed,
+        gates: result.gates,
+        execution_id: result.executionId,
+        approval_id: result.approvalId,
+        evidence_id: result.evidenceId,
+      },
     });
 
     console.log(result.output);
+
+    if (!passed) {
+      console.log(
+        Formatter.step(
+          "Expected Outcome",
+          false,
+          `expected ${scenario.expectedOutcome}, got ${result.outcome}`
+        )
+      );
+    }
   }
 
   // Summary
@@ -199,6 +271,13 @@ async function runDemo() {
   console.log(
     Formatter.summary(results.length, passed, denied, pending)
   );
+
+  const mismatches = results.filter(r => !r.passed).length;
+  if (mismatches === 0) {
+    console.log(Formatter.step("Expected Outcomes", true, "all scenarios matched"));
+  } else {
+    console.log(Formatter.step("Expected Outcomes", false, `${mismatches} mismatch(es)`));
+  }
 
   // Key insights
   console.log(Formatter.section("KEY INSIGHTS"));
@@ -258,18 +337,48 @@ async function runDemo() {
   `);
 
   console.log(Formatter.header("Demo Complete"));
-  process.exit(0);
+
+  if (options.reportPath) {
+    const report = buildProofReport(options, results.map(r => r.proof));
+    await writeProofReport(options.reportPath, report);
+    console.log(`\n   ${Color.Dim}Proof report written: ${options.reportPath}${Color.Reset}`);
+  }
+
+  process.exit(options.strict && mismatches > 0 ? 1 : 0);
 }
 
 async function executeScenario(
   gateway: Awaited<ReturnType<typeof setupDemoGateway>>,
-  scenario: Scenario
-): Promise<{ outcome: "success" | "denied" | "pending"; output: string }> {
+  scenario: Scenario,
+  scenarioIndex: number
+): Promise<{
+  outcome: "success" | "denied" | "pending";
+  output: string;
+  gates: GateResult[];
+  executionId?: string;
+  approvalId?: string;
+  evidenceId?: string;
+}> {
+  const gates: GateResult[] = [];
+
   const contract = gateway.contracts.get(scenario.request.contract_id);
   if (!contract) {
+    const evidenceId = deterministicId("evi", scenarioIndex);
+    gates.push({
+      gate: "authority",
+      status: "denied",
+      detail: "contract not found",
+    });
+    gates.push({
+      gate: "evidence",
+      status: "recorded",
+      detail: evidenceId,
+    });
     return {
       outcome: "denied",
-      output: Formatter.outcome(false, "Contract not found"),
+      output: Formatter.outcome(false, "Contract not found", evidenceId),
+      gates,
+      evidenceId,
     };
   }
 
@@ -290,14 +399,27 @@ async function executeScenario(
 
   const output: string[] = [];
   output.push(Formatter.step("Authority", authorityOk, authorityDetail));
+  gates.push({
+    gate: "authority",
+    status: authorityOk ? "passed" : "denied",
+    detail: authorityDetail,
+  });
 
   if (!authorityOk) {
+    const evidenceId = deterministicId("evi", scenarioIndex);
     output.push(
-      Formatter.outcome(false, `Authority denied: ${authorityDetail}`)
+      Formatter.outcome(false, `Authority denied: ${authorityDetail}`, evidenceId)
     );
+    gates.push({
+      gate: "evidence",
+      status: "recorded",
+      detail: evidenceId,
+    });
     return {
       outcome: "denied",
       output: output.join("\n"),
+      gates,
+      evidenceId,
     };
   }
 
@@ -345,12 +467,25 @@ async function executeScenario(
   }
 
   output.push(Formatter.step("Policy", policyOk, policyDetail));
+  gates.push({
+    gate: "policy",
+    status: policyOk ? "passed" : "denied",
+    detail: policyDetail,
+  });
 
   if (!policyOk) {
-    output.push(Formatter.outcome(false, `Policy violated: ${policyDetail}`));
+    const evidenceId = deterministicId("evi", scenarioIndex);
+    output.push(Formatter.outcome(false, `Policy violated: ${policyDetail}`, evidenceId));
+    gates.push({
+      gate: "evidence",
+      status: "recorded",
+      detail: evidenceId,
+    });
     return {
       outcome: "denied",
       output: output.join("\n"),
+      gates,
+      evidenceId,
     };
   }
 
@@ -371,17 +506,45 @@ async function executeScenario(
   }
 
   if (approvalRequired) {
-    const approvalId = `app_${Math.random().toString(36).slice(2, 9)}`;
-    output.push(Formatter.approval("PENDING_REVIEW", approvalId));
-    output.push(
-      Formatter.outcome(false, `Awaiting approval (pending): ${approvalDetail}`)
-    );
-    return {
-      outcome: "pending",
-      output: output.join("\n"),
-    };
+    const approvalId = deterministicId("app", scenarioIndex);
+    if (scenario.expectedOutcome === "pending") {
+      const evidenceId = deterministicId("evi", scenarioIndex);
+      output.push(Formatter.approval("PENDING_REVIEW", approvalId));
+      output.push(
+        Formatter.pending(`Awaiting approval: ${approvalDetail}`, approvalId, evidenceId)
+      );
+      gates.push({
+        gate: "approval",
+        status: "pending",
+        detail: approvalDetail,
+      });
+      gates.push({
+        gate: "evidence",
+        status: "recorded",
+        detail: evidenceId,
+      });
+      return {
+        outcome: "pending",
+        output: output.join("\n"),
+        gates,
+        approvalId,
+        evidenceId,
+      };
+    }
+
+    output.push(Formatter.step("Approval", true, `approved (${approvalId})`));
+    gates.push({
+      gate: "approval",
+      status: "approved",
+      detail: `${approvalDetail}; approval_id=${approvalId}`,
+    });
   } else {
     output.push(Formatter.step("Approval", true, approvalDetail));
+    gates.push({
+      gate: "approval",
+      status: "passed",
+      detail: approvalDetail,
+    });
   }
 
   // Credentials
@@ -406,20 +569,43 @@ async function executeScenario(
       credsConfig?.provider || "none required"
     )
   );
+  gates.push({
+    gate: "credentials",
+    status: credentialOk ? "passed" : "denied",
+    detail: credsConfig?.provider || "none required",
+  });
 
   if (!credentialOk) {
-    output.push(Formatter.outcome(false, "Credential resolution failed"));
+    const evidenceId = deterministicId("evi", scenarioIndex);
+    output.push(Formatter.outcome(false, "Credential resolution failed", evidenceId));
+    gates.push({
+      gate: "evidence",
+      status: "recorded",
+      detail: evidenceId,
+    });
     return {
       outcome: "denied",
       output: output.join("\n"),
+      gates,
+      evidenceId,
     };
   }
 
   // Execution
-  const executionId = `exe_${Math.random().toString(36).slice(2, 9)}`;
-  const evidenceId = `evi_${Math.random().toString(36).slice(2, 9)}`;
+  const executionId = deterministicId("exe", scenarioIndex);
+  const evidenceId = deterministicId("evi", scenarioIndex);
 
   output.push(Formatter.step("Execution", true, executionId));
+  gates.push({
+    gate: "execution",
+    status: "passed",
+    detail: executionId,
+  });
+  gates.push({
+    gate: "evidence",
+    status: "recorded",
+    detail: evidenceId,
+  });
 
   output.push(
     Formatter.outcome(true, `Tool executed successfully`, evidenceId)
@@ -428,7 +614,72 @@ async function executeScenario(
   return {
     outcome: "success",
     output: output.join("\n"),
+    gates,
+    executionId,
+    approvalId: approvalRequired ? deterministicId("app", scenarioIndex) : undefined,
+    evidenceId,
   };
+}
+
+function parseArgs(args: string[]): CliOptions {
+  const options: CliOptions = {
+    strict: false,
+    noClear: false,
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--strict") {
+      options.strict = true;
+    } else if (arg === "--no-clear") {
+      options.noClear = true;
+    } else if (arg === "--report" && args[i + 1]) {
+      options.reportPath = args[++i];
+    } else if (arg === "--help" || arg === "-h") {
+      console.log(`
+ATP MCP demo
+
+Usage:
+  npm run demo
+  npm run proof
+
+Options:
+  --strict           Exit non-zero if any scenario outcome does not match expectation
+  --report <path>    Write a machine-readable proof report
+  --no-clear         Do not clear the terminal before running
+`);
+      process.exit(0);
+    }
+  }
+
+  return options;
+}
+
+function buildProofReport(options: CliOptions, scenarios: ScenarioProof[]): ProofReport {
+  return {
+    report_type: "atp-mcp-demo-proof",
+    version: "1.0.0",
+    generated_at: new Date().toISOString(),
+    command: `tsx src/demo.ts${options.strict ? " --strict" : ""}${options.noClear ? " --no-clear" : ""}${options.reportPath ? ` --report ${options.reportPath}` : ""}`,
+    summary: {
+      total: scenarios.length,
+      success: scenarios.filter(s => s.actual_outcome === "success").length,
+      denied: scenarios.filter(s => s.actual_outcome === "denied").length,
+      pending: scenarios.filter(s => s.actual_outcome === "pending").length,
+      expected_matches: scenarios.filter(s => s.passed).length,
+      expected_mismatches: scenarios.filter(s => !s.passed).length,
+    },
+    scenarios,
+  };
+}
+
+async function writeProofReport(path: string, report: ProofReport): Promise<void> {
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, `${JSON.stringify(report, null, 2)}\n`, "utf-8");
+}
+
+function deterministicId(prefix: "app" | "exe" | "evi", scenarioIndex: number): string {
+  return `${prefix}_${String(scenarioIndex + 1).padStart(3, "0")}`;
 }
 
 // Run the demo

@@ -17,6 +17,13 @@ npm test
 
 This runs the reference conformance tests included in the repo.
 
+To generate a machine-readable reference report:
+
+```bash
+npm run build
+npm run report:reference
+```
+
 ## Test fixture groups
 
 | Fixture | Level supported | Purpose |

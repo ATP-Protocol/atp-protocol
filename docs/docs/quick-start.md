@@ -132,4 +132,5 @@ For a credible first evaluation:
 - [5-minute proof demo](./proof-demo.md)
 - [Conformance testing](./conformance/overview.md)
 - [Adoption paths](./adoption-paths.md)
+- [MCP install path](./mcp-install.md)
 - [Release readiness](./release-readiness.md)

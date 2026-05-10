@@ -79,3 +79,5 @@ A strong design partner candidate can answer these questions:
 | What evidence matters later? | Fields an auditor or operator would need |
 
 Use the GitHub issue template "Design partner candidate" to propose a first integration.
+
+Use [Design Partner Evidence](./design-partner-evidence.md) for the case-note format once a proof run exists.

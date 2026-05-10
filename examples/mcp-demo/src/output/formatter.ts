@@ -69,6 +69,20 @@ export class Formatter {
     return result;
   }
 
+  static pending(message: string, approvalId?: string, evidenceId?: string): string {
+    let result = `\n   ${Color.FgYellow}${Color.Bright}⏳ PENDING${Color.Reset}`;
+    if (message) {
+      result += `\n   ${Color.FgGray}${message}${Color.Reset}`;
+    }
+    if (approvalId) {
+      result += `\n   ${Color.Dim}Approval ID: ${approvalId}${Color.Reset}`;
+    }
+    if (evidenceId) {
+      result += `\n   ${Color.Dim}Evidence ID: ${evidenceId}${Color.Reset}`;
+    }
+    return result;
+  }
+
   static approval(state: string, approvalId?: string): string {
     let icon = "⏳";
     let color = Color.FgYellow;

@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "demo": "tsx src/demo.ts",
+    "proof": "tsx src/demo.ts --strict --no-clear --report proof/latest-demo-report.json",
     "dev": "tsx watch src/demo.ts",
     "clean": "rm -rf dist"
   },

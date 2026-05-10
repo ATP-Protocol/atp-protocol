@@ -1,0 +1,38 @@
+{
+  "name": "ATP Governance MCP Server",
+  "slug": "atp-governance",
+  "package": "@atp-protocol/mcp-server",
+  "version": "0.1.0",
+  "description": "Govern AI agent actions with ATP contracts, policy checks, approvals, credential mediation, and evidence capture.",
+  "command": "npx",
+  "args": ["@atp-protocol/mcp-server"],
+  "categories": ["governance", "security", "agent-tools", "audit"],
+  "homepage": "https://github.com/ATP-Protocol/atp-protocol/tree/main/mcp-server",
+  "repository": "https://github.com/ATP-Protocol/atp-protocol",
+  "license": "Apache-2.0",
+  "tools": [
+    "atp_validate_contract",
+    "atp_evaluate_policy",
+    "atp_check_approval",
+    "atp_govern_execute",
+    "atp_register_contract",
+    "atp_bind_authority",
+    "atp_store_credential",
+    "atp_register_tool",
+    "atp_get_evidence",
+    "atp_list_pending_approvals",
+    "atp_approve",
+    "atp_gateway_status"
+  ],
+  "security": {
+    "credentials": "Reference server supports credential storage for evaluation. Production deployments should replace in-memory/plaintext stores with a managed vault.",
+    "network": "Runs over MCP stdio by default.",
+    "attestation": "Evidence can be anchored through external attestation backends when configured."
+  },
+  "proof": {
+    "demo": "examples/mcp-demo",
+    "reference_report": "examples/mcp-demo/proof/reference-demo-report.json",
+    "conformance": "conformance"
+  },
+  "status": "listing-draft"
+}

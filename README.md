@@ -148,10 +148,11 @@ ATP is public-preview ready, with the core protocol, SDKs, reference gateway, co
 | Area | Current state | 9.8 gate |
 |------|---------------|----------|
 | Protocol | Draft v1 spec and schemas are present | Freeze v1.0.0-rc.1 after external review |
-| Proof | Local MCP governance demo is runnable | Add recorded demo output and CI smoke check |
-| Conformance | Fixtures and runner exist for 4 levels | Publish badge/report format and first external implementation report |
+| Proof | Strict MCP governance demo and reference proof report are present | Publish recorded demo output from CI/release |
+| Conformance | Fixtures, runner, report format, and CI artifact path exist | First external implementation report |
 | Packages | Publish workflow exists | Publish npm/PyPI packages from first release |
-| Adoption | Use-case paths documented | Convert 2-3 design partners into public case notes or anonymized reports |
+| Adoption | Use-case paths, intake, and case-note format are documented | Convert 2-3 design partners into public case notes or anonymized reports |
+| MCP install | Server package and listing draft exist | Marketplace submission/acceptance |
 
 ## Backend flexibility
 
@@ -178,18 +179,24 @@ Open source gives ATP reach. Pluggable backends give ATP flexibility.
 - [x] CI pipeline (TS Node 18/20/22, Python 3.10/3.11/3.12)
 - [x] Publish workflow (npm + PyPI on release)
 - [x] 5-minute local proof demo path
+- [x] Strict proof report command and committed reference report
+- [x] CI proof smoke job
+- [x] Reference conformance report artifact path
 - [x] Public readiness scorecard
 - [x] Design partner intake path
+- [x] Design partner case-note template
+- [x] MCP install path and listing draft
 - [ ] npm/PyPI initial publish
 - [ ] First external conformance report
 - [ ] Design partner case notes
-- [ ] MCP plugin marketplace listing
+- [ ] MCP marketplace submission/acceptance
 
 ## Evaluation paths
 
 - **Developers:** start with the [5-minute proof](docs/docs/proof-demo.md), then wrap one MCP tool with `atpGovern`.
 - **Gateway implementers:** run the [conformance suite](conformance/README.md) and publish a report against Aware, Compatible, Verified, or Attested.
 - **Design partners:** use the [adoption paths](docs/docs/adoption-paths.md) to pick one consequential agent action and prove the governance loop.
+- **MCP users:** use the [MCP install path](docs/docs/mcp-install.md) to add ATP governance to an MCP client.
 - **Maintainers:** follow the [release readiness checklist](docs/docs/release-readiness.md) before publishing npm/PyPI packages.
 
 ## Contributing

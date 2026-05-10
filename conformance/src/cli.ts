@@ -50,7 +50,12 @@ async function main() {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const module = require(absoluteTargetPath);
-    target = module.default || module;
+    target =
+      module.default ||
+      module.target ||
+      (typeof module.createReferenceAdapter === "function"
+        ? module.createReferenceAdapter()
+        : module);
 
     if (!target || typeof target !== "object") {
       throw new Error("Target must export a ConformanceTarget object");

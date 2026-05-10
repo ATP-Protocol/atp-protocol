@@ -15,6 +15,14 @@ npm install
 npm run demo
 ```
 
+For a strict, machine-readable proof run:
+
+```bash
+npm run proof
+```
+
+This exits non-zero if any expected outcome fails and writes `proof/latest-demo-report.json`.
+
 ## What must appear
 
 The demo should show all six scenarios:
@@ -44,6 +52,8 @@ MCP request
 
 The tool handlers are mock handlers. The governance path is real: contracts are loaded, policies are evaluated, credentials are resolved, approval states are computed, and evidence records are generated.
 
+The repo also includes a committed reference report at `examples/mcp-demo/proof/reference-demo-report.json`. Use it as the expected output shape for CI, demos, and design-partner evaluations.
+
 ## Passing criteria
 
 An evaluator can treat the demo as passed when:
@@ -51,7 +61,7 @@ An evaluator can treat the demo as passed when:
 - all six scenarios complete without an unhandled exception;
 - denial scenarios stop before execution;
 - pending approval scenarios stop before execution;
-- success scenarios print evidence IDs;
+- all scenarios record evidence IDs;
 - credentials are never printed as raw secrets;
 - the result explains which governance gate decided the outcome.
 

@@ -13,7 +13,7 @@ Authority Check → Policy Evaluation → Approval Gate → Credential Injection
 **Scenarios:**
 
 1. ✅ **Send email to approved vendor** → SUCCESS (full governance pipeline)
-   - Alice has authority, domain whitelisted, under approval threshold, credentials injected, executes
+   - Alice has authority, domain whitelisted, approval is simulated as granted, credentials injected, executes
 
 2. ❌ **Send email to unauthorized domain** → DENIED (policy violation)
    - Alice has authority, but domain not in whitelist — blocked at policy stage
@@ -180,6 +180,14 @@ This will:
 4. Show which scenarios succeeded, were denied, or are pending
 5. Explain what's happening under the hood
 
+### Run the strict proof
+
+```bash
+npm run proof
+```
+
+The proof command runs the same six scenarios in strict mode and writes `proof/latest-demo-report.json`. It exits non-zero if any actual outcome differs from the expected outcome. A committed reference report is available at `proof/reference-demo-report.json`.
+
 ### Example Output
 
 ```
@@ -204,12 +212,12 @@ This will:
    Pipeline:
    ✓ Authority verified (procurement_agent)
    ✓ Policy satisfied (domain whitelist, no prohibited content)
-   ⏳ Approval Required (awaiting procurement_manager review)
+   ✓ Approval approved (app_001)
    ✓ Credentials resolved (gmail oauth_token)
    ✓ Execution successful (msg_abc123)
 
    ✓ SUCCESS
-   Evidence ID: evi_abc123...
+   Evidence ID: evi_001
 
 📋 Scenario: Send Email to Unauthorized Domain
    Policy violation at domain check
@@ -220,6 +228,7 @@ This will:
 
    ✗ DENIED
    Policy violated: domain not whitelisted
+   Evidence ID: evi_002
 
 ...
 ```
@@ -292,8 +301,8 @@ mcp-demo/
 1. **ATP works with real MCP tools** — not abstract; concrete handlers
 2. **Multiple governance profiles** — full, lightweight, threshold-based
 3. **Real constraints** — domain whitelists, content deny lists, amount limits
-4. **Real credentials** — OAuth tokens, bearer tokens, API keys
-5. **Real evidence** — audit trail with decision points and timestamps
+4. **Real credential flow** — OAuth tokens, bearer tokens, API keys are resolved and injected by the gateway path
+5. **Real evidence shape** — audit trail with decision points and deterministic proof IDs
 6. **Failed scenarios** — shows what happens when policy blocks, authority denied, etc.
 
 This is the killer demo — the one that makes people instantly understand what ATP does and why it matters.

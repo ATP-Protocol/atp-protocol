@@ -390,7 +390,7 @@ export class ConformanceRunner {
   private async runAttestedLevelTests(): Promise<LevelResults> {
     const tests: TestResult[] = [];
 
-    // For now, just verify that anchorEvidence is implemented
+    // Verify that evidence can be anchored and a backend reference is returned.
     const startTime = Date.now();
     let passed = false;
     let error: string | undefined;
@@ -399,8 +399,18 @@ export class ConformanceRunner {
       if (!this.target.anchorEvidence) {
         error = "anchorEvidence not implemented";
       } else {
-        // Just verify the method signature is correct
-        passed = true;
+        const result = await this.target.anchorEvidence("evi_conformance_probe");
+        if (!result || typeof result !== "object") {
+          error = "anchorEvidence must return an anchor result";
+        } else if (!result.attestation_ref && !result.tx_hash) {
+          error = "anchorEvidence result must include attestation_ref or tx_hash";
+        } else if (!result.backend) {
+          error = "anchorEvidence result must include backend";
+        } else if (!result.anchored_at) {
+          error = "anchorEvidence result must include anchored_at";
+        } else {
+          passed = true;
+        }
       }
     } catch (e) {
       error = e instanceof Error ? e.message : String(e);
@@ -429,19 +439,11 @@ export class ConformanceRunner {
     verified: LevelResults,
     attested: LevelResults
   ): "none" | "aware" | "compatible" | "verified" | "attested" {
-    if (attested.failed === 0 && attested.tests.length > 0) {
-      return "attested";
-    }
-    if (verified.failed === 0 && verified.tests.length > 0) {
-      return "verified";
-    }
-    if (compatible.failed === 0 && compatible.tests.length > 0) {
-      return "compatible";
-    }
-    if (aware.failed === 0 && aware.tests.length > 0) {
-      return "aware";
-    }
-    return "none";
+    if (aware.failed > 0 || aware.tests.length === 0) return "none";
+    if (compatible.failed > 0 || compatible.tests.length === 0) return "aware";
+    if (verified.failed > 0 || verified.tests.length === 0) return "compatible";
+    if (attested.failed > 0 || attested.tests.length === 0) return "verified";
+    return "attested";
   }
 
   /**
