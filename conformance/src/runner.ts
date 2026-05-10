@@ -385,7 +385,7 @@ export class ConformanceRunner {
 
   /**
    * Run ATP-Attested conformance tests
-   * Level 4: DUAL network integration and evidence anchoring
+   * Level 4: external attestation backend integration and evidence anchoring
    */
   private async runAttestedLevelTests(): Promise<LevelResults> {
     const tests: TestResult[] = [];

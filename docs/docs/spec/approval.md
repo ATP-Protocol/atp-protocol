@@ -303,39 +303,30 @@ Action complete. Full audit trail preserved forever.
 
 ## SDK Usage
 
-Monitor action status:
+Run the approval state machine locally:
 
 ```typescript
-import { ATP } from '@atp-protocol/sdk';
+import { ApprovalFlow } from "@atp-protocol/sdk";
 
-const atp = new ATP({ /* ... */ });
+const flow = new ApprovalFlow(
+  "ctr_delete_user",
+  "user.delete",
+  { userId: "12345", environment: "staging" },
+  "0xAgentWallet"
+);
 
-// Propose an action
-const action = await atp.actions.propose({
-  type: 'user.delete',
-  target: { userId: '12345' },
+flow.transition("deliver");
+flow.transition("approve", {
+  approver: "0xApproverWallet",
+  role: "security_admin",
 });
 
-console.log(action.id); // "action-xyz"
-console.log(action.status); // "proposed"
-
-// Wait for approval
-const updated = await atp.actions.waitForApproval(action.id, {
-  timeout: 5 * 60 * 1000, // 5 minutes
-});
-
-console.log(updated.status); // "approved" or "escalated" or "rejected"
-
-// If approved, execute
-if (updated.status === 'approved') {
-  const executed = await atp.actions.execute(action.id);
-  console.log(executed.status); // "executing" then "attested"
+if (flow.isApproved()) {
+  const record = flow.toRecord("0xApproverWallet", "security_admin");
+  console.log(record.approval_id);
 }
 
-// Check final status
-const final = await atp.actions.get(action.id);
-console.log(final.status); // "settled" or "exec_failed"
-console.log(final.evidence); // Full evidence object
+console.log(flow.state); // "APPROVED"
 ```
 
 ## Best Practices

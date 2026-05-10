@@ -74,12 +74,12 @@ export interface ConformanceTarget {
   classifyOutcome?(response: { status: number; body?: unknown }): string;
 
   // ===== LEVEL 4: ATTESTED =====
-  // DUAL network integration and evidence anchoring
+  // External attestation backend integration and evidence anchoring
 
   /**
-   * Anchor evidence record on DUAL network
+   * Anchor evidence record on an external attestation backend
    * @param evidenceId Evidence ID to anchor
-   * @returns Transaction hash and block number
+   * @returns Backend-specific anchor reference
    */
   anchorEvidence?(evidenceId: string): Promise<AnchorResult>;
 }
@@ -113,7 +113,7 @@ export interface EvidenceResult {
 }
 
 /**
- * Result of DUAL anchoring
+ * Result of external evidence anchoring
  */
 export interface AnchorResult {
   tx_hash: string;

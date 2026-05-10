@@ -200,4 +200,4 @@ This SDK implements the [ATP Specification v1.0.0-draft.2](https://atp-protocol.
 
 ## License
 
-MIT
+Apache-2.0

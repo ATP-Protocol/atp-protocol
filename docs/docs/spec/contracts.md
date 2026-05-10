@@ -388,31 +388,19 @@ Deletion allowed during business hours in staging only.
 Create and validate contracts programmatically:
 
 ```typescript
-import { Contract } from '@atp-protocol/sdk';
+import { loadContract, validateContract } from "@atp-protocol/sdk";
 
-// Load from JSON
-const contractJson = require('./contract.json');
-const contract = Contract.from(contractJson);
+// Load and validate from JSON
+const contract = await loadContract("./contract.json");
+const result = validateContract(contract);
 
-// Validate
-const result = contract.validate();
 if (!result.valid) {
-  console.error('Validation errors:', result.errors);
+  console.error("Validation errors:", result.errors);
   process.exit(1);
 }
 
-// Sign (requires signer keys)
-const signed = await contract.sign([
-  { signer: 'alice@acme.com', privateKey: aliceKey },
-  { signer: 'bob@acme.com', privateKey: bobKey },
-]);
-
-// Save signed contract
-await signed.save('./contract-signed.json');
-
-// Use in ATP
-const atp = new ATP({ /* ... */ });
-await atp.contracts.register(signed);
+console.log(contract.authority);
+console.log(contract.actions);
 ```
 
 ## Next Steps

@@ -227,4 +227,4 @@ console.log("1. Contracts define both policy AND approval/credential configs");
 console.log("2. Policy evaluation is fast (local, no network required)");
 console.log("3. All executions are recorded as evidence (permitted or denied)");
 console.log("4. Tools are wrapped transparently — agents don't see the governance");
-console.log("\nNext steps: Read CLAUDE.md in the atp-protocol repo for advanced topics.\n");
+console.log("\nNext steps: run examples/mcp-demo for the full authority->policy->approval->evidence proof.\n");

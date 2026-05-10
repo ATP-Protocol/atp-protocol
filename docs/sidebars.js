@@ -16,6 +16,9 @@ const sidebars = {
   docsSidebar: [
     'intro',
     'quick-start',
+    'proof-demo',
+    'adoption-paths',
+    'release-readiness',
     {
       label: 'Specification',
       items: [
@@ -27,6 +30,7 @@ const sidebars = {
         'spec/credentials',
         'spec/execution',
         'spec/evidence',
+        'spec/security',
       ],
     },
   ],

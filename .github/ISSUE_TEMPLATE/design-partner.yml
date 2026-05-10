@@ -1,0 +1,56 @@
+name: Design partner candidate
+description: Propose a first ATP-governed agent action.
+title: "[Design partner]: "
+labels: ["design-partner", "adoption"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this to propose a small, provable ATP integration. Start with one consequential action.
+  - type: input
+    id: organization
+    attributes:
+      label: Organization or team
+      description: Who would run the integration?
+    validations:
+      required: true
+  - type: input
+    id: action
+    attributes:
+      label: Governed action
+      description: The exact agent action or tool call ATP would govern.
+      placeholder: "approve-payment, send-email, create-ticket, deploy-preview"
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk and policy
+      description: What can go wrong, and what policy should stop it?
+    validations:
+      required: true
+  - type: textarea
+    id: authority
+    attributes:
+      label: Authority and approval
+      description: Which identity, role, or service account has authority? When is approval required?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence required
+      description: What evidence would an operator or auditor need after execution?
+    validations:
+      required: true
+  - type: dropdown
+    id: target_level
+    attributes:
+      label: Target conformance level
+      options:
+        - ATP-Aware
+        - ATP-Compatible
+        - ATP-Verified
+        - ATP-Attested
+    validations:
+      required: true

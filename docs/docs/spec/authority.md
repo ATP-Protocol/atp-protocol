@@ -222,54 +222,48 @@ ATP maintains an authority state database that tracks:
 
 When checking authority, ATP must consult this state. Authority decisions are deterministic: given the same state and time, the same decision must be made.
 
-## SDK Usage
+## Implementation Note
 
-Check authority programmatically:
+The current SDK does not ship an authority registry client. Gateways should implement authority verification as a deterministic check over their trusted authority state, then expose the result to governed execution.
 
 ```typescript
-import { Authority, Delegation } from '@atp-protocol/sdk';
+type AuthorityRecord = {
+  wallet: string;
+  actions: string[];
+  environments: string[];
+  expires_at?: string;
+};
 
-const atp = new ATP({ /* ... */ });
+function canApprove(
+  authority: AuthorityRecord,
+  action: string,
+  environment: string,
+  at = new Date()
+) {
+  const active =
+    !authority.expires_at || new Date(authority.expires_at) > at;
 
-// Get Alice's authority
-const alice = atp.authority.wallet('atp://com.acme/alice-cso');
-console.log(alice.authority); // Can sign any contract
+  return (
+    active &&
+    authority.actions.includes(action) &&
+    authority.environments.includes(environment)
+  );
+}
 
-// Get Bob's authority (delegated from Alice)
-const bob = atp.authority.wallet('atp://com.acme/bob-eng-lead');
-console.log(bob.scoped_actions); // ['user.delete', 'database.backup']
-console.log(bob.scoped_environments); // ['staging', 'development']
-
-// Create a delegation
-const delegation = new Delegation({
-  delegator: 'atp://com.acme/alice-cso',
-  delegatee: 'atp://com.acme/service-account',
-  scope: {
-    actions: ['user.delete'],
-    environments: ['staging'],
+const allowed = canApprove(
+  {
+    wallet: "0xApproverWallet",
+    actions: ["user.delete"],
+    environments: ["staging"],
   },
-  validity: {
-    not_before: new Date(),
-    not_after: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-  },
-});
+  "user.delete",
+  "staging"
+);
 
-// Sign and publish
-const signed = await delegation.sign([aliceKey]);
-await atp.delegations.publish(signed);
-
-// Verify authority before approving an action
-const canApprove = await atp.authority.verify({
-  approver: 'atp://com.acme/bob-eng-lead',
-  action_type: 'user.delete',
-  environment: 'staging',
-  timestamp: new Date(),
-});
-
-if (canApprove.valid) {
-  console.log('Bob can approve this action');
+if (allowed) {
+  console.log("Approver can approve this action");
 } else {
-  console.log('Bob cannot approve:', canApprove.reason);
+  console.log("Approver is outside delegated authority");
 }
 ```
 

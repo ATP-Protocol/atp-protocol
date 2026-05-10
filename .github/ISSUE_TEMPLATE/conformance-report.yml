@@ -1,0 +1,60 @@
+name: Conformance report
+description: Submit a conformance result for an ATP implementation.
+title: "[Conformance]: "
+labels: ["conformance"]
+body:
+  - type: input
+    id: implementation
+    attributes:
+      label: Implementation
+      description: Name of the gateway, SDK, platform, or integration.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Implementation version
+      placeholder: "0.3.0"
+    validations:
+      required: true
+  - type: input
+    id: spec
+    attributes:
+      label: ATP spec version
+      placeholder: "1.0.0-draft.2"
+    validations:
+      required: true
+  - type: input
+    id: suite
+    attributes:
+      label: Conformance suite version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: level
+    attributes:
+      label: Level achieved
+      options:
+        - none
+        - ATP-Aware
+        - ATP-Compatible
+        - ATP-Verified
+        - ATP-Attested
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results
+      description: Paste the summary report or link to the full JSON report.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: skipped
+    attributes:
+      label: Skipped tests or limitations
+      description: List skipped capabilities and explain why.
+    validations:
+      required: false

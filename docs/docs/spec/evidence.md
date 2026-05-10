@@ -247,59 +247,46 @@ Evidence can be purged after retention period, but audit log summary is kept per
 Generate evidence after execution:
 
 ```typescript
-import { ATP, Evidence } from '@atp-protocol/sdk';
+import { MemoryEvidenceBackend, buildEvidence } from "@atp-protocol/sdk";
 
-const atp = new ATP({ /* ... */ });
+const backend = new MemoryEvidenceBackend();
 
-// Execute action
-const executed = await atp.actions.execute(action_id);
-
-// Generate evidence
-const evidence = await atp.evidence.generate({
-  action_id: executed.id,
-  outcome: executed.outcome,
-  result: executed.result,
-  timestamp: new Date(),
+const evidence = buildEvidence({
+  contract_id: "ctr_delete_user",
+  execution_id: execution.record.execution_id,
+  authority: contract.authority,
+  requesting_wallet: "0xAgentWallet",
+  requesting_org: "org_acme",
+  action: "user.delete",
+  scope_snapshot: { userId: "12345", environment: "staging" },
+  outcome: execution.outcome,
+  request_payload: { userId: "12345" },
+  response_payload: execution.result,
+  attestation_level: contract.attestation,
+  gateway_id: "gw_local",
+  policy_snapshot: {
+    policies_evaluated: 1,
+    constraints_applied: [],
+  },
 });
 
-console.log(evidence.evidence_id); // "evidence-abc123"
-console.log(evidence.signature); // COSE signature
-
-// Record evidence
-await atp.evidence.record(evidence);
-
-// Optionally attest to external backend
-const attested = await atp.attestation.anchor(evidence, {
-  backend: 's3-immutable-ledger',
-});
-
-console.log(attested.anchor_id); // Attestation anchor ID
+await backend.store(evidence);
+console.log(evidence.evidence_id);
 ```
 
 Query evidence:
 
 ```typescript
-// Get evidence for a specific action
-const evidence = await atp.evidence.get(action_id);
-console.log(evidence.outcome); // success, failure, etc.
+const stored = await backend.get(evidence.evidence_id);
+console.log(stored?.outcome);
 
-// Query audit trail
-const logs = await atp.audit.query({
-  signer: 'agent-001',
-  start_time: '2026-03-01T00:00:00Z',
-  end_time: '2026-03-31T23:59:59Z',
-  limit: 100
+const results = await backend.query({
+  requesting_wallet: "0xAgentWallet",
+  action: "user.delete",
+  limit: 10,
 });
 
-logs.forEach(entry => {
-  console.log(`${entry.timestamp}: ${entry.action_type} -> ${entry.outcome}`);
-});
-
-// Search for a specific pattern
-const failedActions = await atp.audit.query({
-  outcome: 'failure',
-  start_time: '2026-03-01T00:00:00Z'
-});
+console.log(results.records.length);
 ```
 
 ## Threat Model

@@ -353,29 +353,18 @@ ATP maintains this state in its database and updates it after each action execut
 Evaluate policies programmatically:
 
 ```typescript
-import { Policy, Constraint } from '@atp-protocol/sdk';
+import { evaluatePolicy } from "@atp-protocol/sdk";
 
-const contract = require('./contract.json');
+const evaluation = evaluatePolicy(contract, {
+  environment: "staging",
+  userId: "12345",
+});
 
-// Proposed action
-const action = {
-  type: 'user.delete',
-  target: { userId: '12345' },
-  metadata: {
-    environment: 'staging',
-  },
-  timestamp: new Date(),
-};
-
-// Evaluate
-const policy = new Policy(contract.actions[0].constraints);
-const evaluation = await policy.evaluate(action);
-
-if (evaluation.allowed) {
-  console.log('Action passed all policy constraints');
+if (evaluation.permitted) {
+  console.log("Action passed all policy constraints");
 } else {
-  console.log('Action rejected:', evaluation.failed_constraint);
-  console.log('Reason:', evaluation.reason);
+  console.log("Action rejected:", evaluation.denial_reason);
+  console.log("Source:", evaluation.denial_source);
 }
 ```
 

@@ -56,7 +56,7 @@ export interface EvidenceQueryResult {
  * The SDK ships with Memory, File, and Postgres backends.
  */
 export interface EvidenceBackend {
-  /** Backend name (e.g., "memory", "file", "dual"). */
+  /** Backend name (e.g., "memory", "file", "external"). */
   readonly name: string;
 
   /** Store an evidence record. */
@@ -279,7 +279,7 @@ export class FileEvidenceBackend implements EvidenceBackend {
 
 /**
  * Multi-backend that writes to multiple backends simultaneously.
- * Useful for local + external dual-write patterns.
+ * Useful for local + external multi-write patterns.
  *
  * @example
  * ```typescript

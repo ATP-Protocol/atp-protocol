@@ -54,23 +54,23 @@ ATP is **Layer 3**. It depends on layer 1 (identity/crypto), layer 2 (policy con
 
 ATP is built on six core abstractions:
 
-### 1. **Wallet**
-A cryptographic identity representing an agent, user, or organization. A wallet holds signing keys, delegation rules, and audit history. Every actor in ATP has a wallet.
+### 1. **Contract**
+A signed policy document that defines which actions an agent can perform, which constraints apply, whether approval is required, and what evidence must be captured.
 
-### 2. **Organization**
-A security boundary grouping wallets, templates, and policies under a single authority. Organizations can federate (one org can delegate to another).
+### 2. **Authority**
+The identity or organizational role that can issue, approve, revoke, or delegate governed actions.
 
-### 3. **Template**
-A reusable contract that defines what action types are allowed, what constraints apply, and what approval flow is required. A template is signed by an organization's authority key.
+### 3. **Policy**
+The constraint layer that checks request parameters against allowed scopes, limits, deny lists, and contextual rules.
 
-### 4. **Object**
-The entity being acted upon—a cloud resource, a financial account, a database entry, or any system state that the agent wants to modify. Objects are immutable at creation but mutable via governed actions.
+### 4. **Approval**
+The state machine for actions that need human or delegated review before execution.
 
-### 5. **Action**
-An agent's proposal to modify an object. An action includes intent (what to do), context (why, when, where), and a reference to the contract it claims to satisfy. Actions flow through approval, execution, and attestation.
+### 5. **Credential Brokerage**
+The controlled path for resolving and injecting scoped credentials without exposing secrets to the agent.
 
-### 6. **Face**
-An agent's public presentation—credentials, metadata, and policy enforcement rules bound to a specific deployment. A single wallet can have multiple faces (e.g., one for production, one for staging). Faces make it safe to deploy the same agent code in multiple environments.
+### 6. **Evidence**
+The execution record that captures what was requested, how policy evaluated it, which approvals applied, and what happened.
 
 ## Quick Comparison: Without ATP vs. With ATP
 

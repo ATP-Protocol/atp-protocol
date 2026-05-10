@@ -250,39 +250,27 @@ credential_broker:
 Request credentials in your action:
 
 ```typescript
-import { ATP } from '@atp-protocol/sdk';
+import { CredentialStore } from "@atp-protocol/sdk";
 
-const atp = new ATP({ /* ... */ });
+const store = new CredentialStore();
 
-// When executing an action with credential requirements
-const action = await atp.actions.propose({
-  type: 'database.backup',
-  target: { database: 'users' },
-  credentials: {
-    database: {
-      key: 'prod-db-password',
-      injection_method: 'unix_socket'
-    }
-  }
+store.register({
+  provider: "database",
+  org_id: "org_acme",
+  scopes: ["backup"],
+  type: "bearer_token",
+  value: process.env.PROD_DB_BACKUP_TOKEN!,
 });
 
-// ATP will:
-// 1. Validate the action
-// 2. Request approval
-// 3. At execution time:
-//    - Fetch credential from vault
-//    - Inject via Unix socket
-//    - Execute backup
-//    - Log credential access
-//    - Clean up
+const resolution = await store.resolveForContract(contract, "org_acme");
 
-// Get credential access logs
-const logs = await atp.credentials.auditLogs({
-  action_id: action.id,
-  limit: 10
-});
-logs.forEach(log => {
-  console.log(`${log.credential_key}: ${log.status}`);
+if (!resolution.resolved) {
+  throw new Error(resolution.denial_reason);
+}
+
+await backupDatabase({
+  database: "users",
+  headers: resolution.injection_headers,
 });
 ```
 

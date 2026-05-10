@@ -74,10 +74,10 @@ The complete specification document is available on [GitHub](https://github.com/
 ## GitHub Repository
 
 - **Spec source:** [ATP-Protocol/atp-protocol/spec/](https://github.com/ATP-Protocol/atp-protocol/tree/main/spec)
-- **TypeScript SDK:** [ATP-Protocol/atp-protocol-sdk-ts](https://github.com/ATP-Protocol/atp-protocol-sdk-ts)
-- **Python SDK:** [ATP-Protocol/atp-protocol-sdk-py](https://github.com/ATP-Protocol/atp-protocol-sdk-py)
-- **Reference gateway:** [ATP-Protocol/atp-gateway](https://github.com/ATP-Protocol/atp-gateway)
-- **Conformance suite:** [ATP-Protocol/atp-conformance](https://github.com/ATP-Protocol/atp-conformance)
+- **TypeScript SDK:** [sdk/ts](https://github.com/ATP-Protocol/atp-protocol/tree/main/sdk/ts)
+- **Python SDK:** [sdk/python](https://github.com/ATP-Protocol/atp-protocol/tree/main/sdk/python)
+- **Reference gateway:** [gateway](https://github.com/ATP-Protocol/atp-protocol/tree/main/gateway)
+- **Conformance suite:** [conformance](https://github.com/ATP-Protocol/atp-protocol/tree/main/conformance)
 
 ## Contributing
 

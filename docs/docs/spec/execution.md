@@ -331,31 +331,32 @@ Monitor these to detect patterns (e.g., sudden spike in credential injection fai
 Execute an approved action:
 
 ```typescript
-import { ATP } from '@atp-protocol/sdk';
+import { execute } from "@atp-protocol/sdk";
 
-const atp = new ATP({ /* ... */ });
+const result = await execute(
+  async (ctx) => {
+    const response = await deleteUser(ctx.scope_params.userId as string, {
+      signal: ctx.signal,
+    });
 
-const action = await atp.actions.propose({
-  type: 'user.delete',
-  target: { userId: '12345' },
-});
-
-// Wait for approval
-const approved = await atp.actions.waitForApproval(action.id);
-
-if (approved.status === 'approved') {
-  // Execute
-  const executed = await atp.actions.execute(action.id);
-  
-  console.log(executed.status); // "executing" → "attested"
-  console.log(executed.outcome); // "success", "failure", etc.
-  
-  if (executed.outcome === 'success') {
-    console.log('Action succeeded:', executed.result);
-  } else if (executed.outcome === 'failure') {
-    console.log('Action failed:', executed.error_message);
-    console.log('Retryable:', executed.retryable);
+    return response;
+  },
+  {
+    contract,
+    action: "user.delete",
+    params: { userId: "12345", environment: "staging" },
+    requesting_wallet: "0xAgentWallet",
+    timeout_ms: 30_000,
   }
+);
+
+console.log(result.outcome);
+console.log(result.record.execution_id);
+
+if (result.outcome === "outcome:success") {
+  console.log("Action succeeded:", result.result);
+} else {
+  console.log("Action failed:", result.error);
 }
 ```
 

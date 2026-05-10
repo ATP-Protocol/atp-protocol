@@ -45,6 +45,19 @@ Agent → MCP tool call
 
 ATP does not compete with MCP. It governs it. MCP defines *how* an agent calls a tool. ATP defines *whether* that call should happen.
 
+## 5-minute proof
+
+Run the local MCP governance demo to see ATP make real allow/deny/approval decisions without external credentials:
+
+```bash
+git clone https://github.com/ATP-Protocol/atp-protocol.git
+cd atp-protocol/examples/mcp-demo
+npm install
+npm run demo
+```
+
+The demo executes six governed scenarios across email, inventory, and payment tools. It shows authority checks, policy denial, approval gating, credential injection, execution, and evidence capture in one terminal run.
+
 ## Quick example
 
 ```typescript
@@ -128,6 +141,18 @@ ATP is designed as a layered standard. Adoption does not have to be all-or-nothi
 | **ATP-Verified** | System passes the published conformance suite | Credential brokerage, all outcome types, idempotency, revocation, unknown outcome handling |
 | **ATP-Attested** | System produces verifiable evidence anchored through external attestation | Identity binding, organization binding, evidence anchoring, attestation verification |
 
+## Public readiness
+
+ATP is public-preview ready, with the core protocol, SDKs, reference gateway, conformance suite, MCP server, docs, and runnable proof demo in-repo.
+
+| Area | Current state | 9.8 gate |
+|------|---------------|----------|
+| Protocol | Draft v1 spec and schemas are present | Freeze v1.0.0-rc.1 after external review |
+| Proof | Local MCP governance demo is runnable | Add recorded demo output and CI smoke check |
+| Conformance | Fixtures and runner exist for 4 levels | Publish badge/report format and first external implementation report |
+| Packages | Publish workflow exists | Publish npm/PyPI packages from first release |
+| Adoption | Use-case paths documented | Convert 2-3 design partners into public case notes or anonymized reports |
+
 ## Backend flexibility
 
 ATP is a standalone governance protocol designed to work with any attestation backend.
@@ -152,9 +177,20 @@ Open source gives ATP reach. Pluggable backends give ATP flexibility.
 - [x] Documentation site (Docusaurus, 20+ pages)
 - [x] CI pipeline (TS Node 18/20/22, Python 3.10/3.11/3.12)
 - [x] Publish workflow (npm + PyPI on release)
+- [x] 5-minute local proof demo path
+- [x] Public readiness scorecard
+- [x] Design partner intake path
 - [ ] npm/PyPI initial publish
-- [ ] Design partner program
+- [ ] First external conformance report
+- [ ] Design partner case notes
 - [ ] MCP plugin marketplace listing
+
+## Evaluation paths
+
+- **Developers:** start with the [5-minute proof](docs/docs/proof-demo.md), then wrap one MCP tool with `atpGovern`.
+- **Gateway implementers:** run the [conformance suite](conformance/README.md) and publish a report against Aware, Compatible, Verified, or Attested.
+- **Design partners:** use the [adoption paths](docs/docs/adoption-paths.md) to pick one consequential agent action and prove the governance loop.
+- **Maintainers:** follow the [release readiness checklist](docs/docs/release-readiness.md) before publishing npm/PyPI packages.
 
 ## Contributing
 
